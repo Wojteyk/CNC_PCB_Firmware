@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Cortex Debug",
+            "type": "cortex-debug",
+            "request": "launch",
+            "executable": "${workspaceFolder}/build/CNC_PCB_FIRMWARE.elf",
+            "servertype": "stlink",
+            "device": "STM32F405xx",
+            "cwd": "${workspaceFolder}",
+            "runToMain": true,
+            "preLaunchTask": "build"
+        }
+    ]
+}
