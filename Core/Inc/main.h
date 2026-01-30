@@ -63,6 +63,10 @@ void Error_Handler(void);
 #define LCD_DC_GPIO_Port GPIOA
 #define LCD_RST_Pin GPIO_PIN_3
 #define LCD_RST_GPIO_Port GPIOA
+#define ZAXIS_DIR_Pin GPIO_PIN_7
+#define ZAXIS_DIR_GPIO_Port GPIOB
+#define ZAXIS_STEP_Pin GPIO_PIN_8
+#define ZAXIS_STEP_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

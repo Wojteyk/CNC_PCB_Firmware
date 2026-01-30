@@ -46,11 +46,11 @@ add_subdirectory(cmake/stm32cubemx)
 # ============================================================
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/cpp_main.cpp
-    Core/Src/hardware/ili9341.cpp
 
-    # Core/Src/Gcode/GcodeParser.cpp
+    Core/Src/hardware/ili9341.cpp
+    Core/Src/Gcode/GcodeParser.cpp
     Core/Src/common/systemError.cpp
-    # Core/Src/hardware/tmc2209.cpp
+    Core/Src/hardware/tmc2209.cpp
 )
 
 # ============================================================
@@ -60,7 +60,9 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     Inc
     Inc/common
     Inc/hardware
-    # Inc/planner
+    Inc/display
+    Inc/planner
+    Inc/Gcode
 
     Middlewares/Third_Party/FreeRTOS/Source/include
     Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2
