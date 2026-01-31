@@ -6,17 +6,19 @@
 #include "Gcode/GcodeParser.hpp"
 #include "hardware/tmc2209.hpp"
 #include "hardware/montionController.hpp"
-#include "common/machineConfig.hpp" 
+#include "common/machineConfig.hpp"
+#include "hardware/xpt2046.hpp"
 
 extern "C" SPI_HandleTypeDef hspi1;
+extern "C" SPI_HandleTypeDef hspi2;
 extern "C" UART_HandleTypeDef huart1;
 extern "C" TIM_HandleTypeDef htim10;
 
-
 MachineConfig globalConfig;
 
+XPT2046 touch(&hspi2, TOUCH_CS_GPIO_Port, TOUCH_CS_Pin, TOUCH_IRQ_GPIO_Port, TOUCH_IRQ_Pin);
 TMC2209 zAxis(&huart1, 0, ZAXIS_DIR_GPIO_Port, ZAXIS_DIR_Pin, ZAXIS_STEP_GPIO_Port, ZAXIS_STEP_Pin);
-MotionController<TMC2209> mController(&htim10, zAxis, zAxis,zAxis, globalConfig);
+MotionController<TMC2209> mController(&htim10, zAxis, zAxis, zAxis, globalConfig);
 Planner<TMC2209> planner(&mController, globalConfig);
 GcodeParser gParser(planner.getQueueHandle());
 
@@ -36,12 +38,38 @@ extern "C" void cpp_main()
     auto res = mController.init();
     if (!res.isOk())
     {
-        ErrorHandler::report(res.error);
+    //    ErrorHandler::report(res.error);
     }
 
-    planner.start();
-    gParser.start();
     dispController.start();
+    touch.init();
+
+    bool wasPressed = false;
+    uint8_t is = 1;
+
+    while(1) {
+        vTaskDelay(pdMS_TO_TICKS(50)); 
+
+        bool isCurrentlyPressed = touch.isPressed();
+
+        if (isCurrentlyPressed && !wasPressed) {
+            
+            XPT2046::Point p = touch.getPoint();
+            
+            wasPressed = true; 
+        }
+
+        else if (!isCurrentlyPressed && wasPressed) {
+            HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+            if(is)
+            {
+                planner.start();
+                gParser.start();
+                is =0;
+            }
+            wasPressed = false;
+        }
+    }
 }
 
 extern "C" void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef* hspi)
@@ -52,8 +80,10 @@ extern "C" void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef* hspi)
     }
 }
 
-extern "C" void MotionController_Tick() {
-    if (MotionController<TMC2209>::instance != nullptr) {
+extern "C" void MotionController_Tick()
+{
+    if (MotionController<TMC2209>::instance != nullptr)
+    {
         MotionController<TMC2209>::instance->tick();
     }
 }
