@@ -6,14 +6,18 @@
 #include "Gcode/GcodeParser.hpp"
 #include "hardware/tmc2209.hpp"
 #include "hardware/montionController.hpp"
+#include "common/machineConfig.hpp" 
 
 extern "C" SPI_HandleTypeDef hspi1;
 extern "C" UART_HandleTypeDef huart1;
 extern "C" TIM_HandleTypeDef htim10;
 
+
+MachineConfig globalConfig;
+
 TMC2209 zAxis(&huart1, 0, ZAXIS_DIR_GPIO_Port, ZAXIS_DIR_Pin, ZAXIS_STEP_GPIO_Port, ZAXIS_STEP_Pin);
-MotionController<TMC2209> mController(&htim10, zAxis, zAxis,zAxis);
-Planner<TMC2209> planner(&mController);
+MotionController<TMC2209> mController(&htim10, zAxis, zAxis,zAxis, globalConfig);
+Planner<TMC2209> planner(&mController, globalConfig);
 GcodeParser gParser(planner.getQueueHandle());
 
 ILI9341 displayDriver(&hspi1,

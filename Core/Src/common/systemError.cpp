@@ -17,7 +17,7 @@ void ErrorHandler::panicMode(ErrorCode e)
     while (1)
     {
         // turn off everything irq, motors and essential things
-       // HAL_GPIO_TogglePin(LD2_GPIO_Port, LD2_Pin);
+        HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
         for (volatile int i = 0; i < 500000; i++)
             ;
     }

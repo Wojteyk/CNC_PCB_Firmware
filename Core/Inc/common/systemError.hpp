@@ -53,8 +53,12 @@ enum class ErrorCode : uint8_t
     TMC_ResponseNotCorrect,
 
     Controller_TimInitFail,
+    Controller_QueueCreateFail,
 
     ILI9341_SPIFailed,
+
+    LCD_TransmissionFailed,
+    LCD_OutOfRange,
 
     /// @}
 };

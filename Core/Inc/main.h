@@ -57,16 +57,18 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define ZAXIS_STEP_Pin GPIO_PIN_0
+#define ZAXIS_STEP_GPIO_Port GPIOC
+#define ZAXIS_DIR_Pin GPIO_PIN_1
+#define ZAXIS_DIR_GPIO_Port GPIOC
 #define LCD_CS_Pin GPIO_PIN_1
 #define LCD_CS_GPIO_Port GPIOA
 #define LCD_DC_Pin GPIO_PIN_2
 #define LCD_DC_GPIO_Port GPIOA
 #define LCD_RST_Pin GPIO_PIN_3
 #define LCD_RST_GPIO_Port GPIOA
-#define ZAXIS_DIR_Pin GPIO_PIN_7
-#define ZAXIS_DIR_GPIO_Port GPIOB
-#define ZAXIS_STEP_Pin GPIO_PIN_8
-#define ZAXIS_STEP_GPIO_Port GPIOB
+#define LED_Pin GPIO_PIN_2
+#define LED_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

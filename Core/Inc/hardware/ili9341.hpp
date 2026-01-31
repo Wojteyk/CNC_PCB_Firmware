@@ -7,6 +7,8 @@
 #include "stm32f4xx_hal_spi.h"
 #include "common/systemError.hpp"
 
+#define LCD_BUFFER_SIZE 1600
+
 class ILI9341
 {
 
@@ -27,6 +29,12 @@ class ILI9341
 
     Result<void> setWindow(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1);
 
+    Result<void> fillRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
+
+    Result<void> drawChar(uint16_t x, uint16_t y, char c, uint16_t color, uint16_t bg);
+
+    Result<void> drawString(uint16_t x, uint16_t y, const char* str, uint16_t color, uint16_t bg);
+
   private:
     SPI_HandleTypeDef* _hspi;
 
@@ -42,6 +50,10 @@ class ILI9341
     Result<void> writeCmd(uint8_t cmd);
     Result<void> writeData(uint8_t data);
     Result<void> writeData16(uint16_t data);
+    Result<void> pushColorBlock(uint32_t color, uint32_t pixelCnt);
+
+    static constexpr uint16_t Y_MAX = 239;
+    static constexpr uint16_t X_MAX = 319;
 
     static constexpr uint8_t CMD_SWRESET = 0x01;
     static constexpr uint8_t CMD_SLPOUT = 0x11;

@@ -37,9 +37,6 @@ struct MachineState
     int32_t stepX = 0;
     int32_t stepY = 0;
     int32_t stepZ = 0;
-
-    float stepsPerMM_XY = 1600.0f;
-    float stepsPerMM_Z = 1600.0f;
 };
 
 /**
@@ -74,15 +71,11 @@ struct StepCmd
 
     int32_t totalSteps;
 
-    bool dirX;
-    bool dirY;
-    bool dirZ;
+    uint32_t startArr;  
+    uint32_t targetArr; 
+    uint32_t accelSteps; 
+    uint32_t decelSteps; 
+
+    uint8_t dirMask;
 };
 
-struct ControllerCmd
-{
-    volatile bool isAcitve;
-    volatile int32_t stepX;
-    volatile int32_t stepY;
-    volatile int32_t stepZ;
-};

@@ -6,13 +6,15 @@
 #include <algorithm>
 #include <math.h>
 #include "common/montionTypes.hpp"
+#include "common/machineConfig.hpp"
 
 template <typename T> class Planner : public CppTask
 {
   public:
-    Planner(MotionController<T>* controller)
-        : _controller(controller)
-        , CppTask("Planner", 1024, 2)
+    Planner(MotionController<T>* controller, const MachineConfig& config)
+        : CppTask("Planner", 1024, 2)
+        , _config(config)
+        ,_controller(controller)
     {
         _montionQueue = xQueueCreate(queueSize, sizeof(MotionCmd));
     }
@@ -33,35 +35,32 @@ template <typename T> class Planner : public CppTask
             {
                 StepCmd stepcmd = calculateSteps(currentCmd);
 
-                while (_controller->isBusy())
-                {
-                    vTaskDelay(pdMS_TO_TICKS(1));
-                }
-
-                _controller->executeAction(stepcmd);
+                _controller->addMove(stepcmd);
             }
         }
     }
 
   private:
+
     StepCmd calculateSteps(const MotionCmd& cmd)
     {
         StepCmd stepCmd;
 
         int32_t targetStepsX =
-            static_cast<int32_t>(cmd.x.value_or(_state.currentX) * _state.stepsPerMM_XY);
+            static_cast<int32_t>(cmd.x.value_or(_state.currentX) * _config.stepsPerMM_XY);
         int32_t targetStepsY =
-            static_cast<int32_t>(cmd.y.value_or(_state.currentY) * _state.stepsPerMM_XY);
+            static_cast<int32_t>(cmd.y.value_or(_state.currentY) * _config.stepsPerMM_XY);
         int32_t targetStepsZ =
-            static_cast<int32_t>(cmd.z.value_or(_state.currentZ) * _state.stepsPerMM_Z);
+            static_cast<int32_t>(cmd.z.value_or(_state.currentZ) * _config.stepsPerMM_Z);
 
         stepCmd.dX = std::abs(targetStepsX - _state.stepX);
         stepCmd.dY = std::abs(targetStepsY - _state.stepY);
         stepCmd.dZ = std::abs(targetStepsZ - _state.stepZ);
 
-        stepCmd.dirX = targetStepsX >= _state.stepX;
-        stepCmd.dirY = targetStepsY >= _state.stepY;
-        stepCmd.dirZ = targetStepsZ >= _state.stepZ;
+        stepCmd.dirMask = 0;
+        if(targetStepsX >= _state.stepX) stepCmd.dirMask |=1;   // bit for x
+        if(targetStepsY >= _state.stepY) stepCmd.dirMask |=2;   // bit for y
+        if(targetStepsZ >= _state.stepZ) stepCmd.dirMask |=4;   // bit for z
 
         _state.stepX = targetStepsX;
         _state.stepY = targetStepsY;
@@ -72,6 +71,11 @@ template <typename T> class Planner : public CppTask
 
         stepCmd.totalSteps = std::max({stepCmd.dX, stepCmd.dY, stepCmd.dZ});
 
+        stepCmd.startArr = _config.startingSpeedToArr;
+        stepCmd.targetArr = _config.defaultTargetspeedToArr;
+        stepCmd.accelSteps = _config.acceleration.steps;
+        stepCmd.decelSteps = stepCmd.totalSteps -  _config.acceleration.steps; 
+
         if (stepCmd.totalSteps == 0) return stepCmd;
 
         return stepCmd;
@@ -79,6 +83,8 @@ template <typename T> class Planner : public CppTask
 
     QueueHandle_t _montionQueue;
     static constexpr uint8_t queueSize = 20;
+
+    const MachineConfig& _config;
 
     MachineState _state;
     MotionController<T>* _controller;

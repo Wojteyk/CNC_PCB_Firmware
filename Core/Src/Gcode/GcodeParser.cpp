@@ -12,7 +12,7 @@ void GcodeParser::run()
     {
         while (true)
         {
-            auto res = parseLine("G1 X10 Y5");
+            auto res = parseLine("G1 Z4");
 
             if (res.isOk())
             {
@@ -23,7 +23,7 @@ void GcodeParser::run()
                 ErrorHandler::report(res.error);
             }
 
-            auto res2 = parseLine("G1 X-10 Y-5");
+            auto res2 = parseLine("G1 Z-4");
 
             if (res2.isOk())
             {
@@ -34,7 +34,7 @@ void GcodeParser::run()
                 ErrorHandler::report(res2.error);
             }
 
-             vTaskDelay(pdMS_TO_TICKS(100)); 
+             vTaskDelay(pdMS_TO_TICKS(1000)); 
         }
     }
 }

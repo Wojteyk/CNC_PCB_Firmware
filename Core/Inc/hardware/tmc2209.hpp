@@ -133,7 +133,7 @@ class TMC2209
     // Command/Configuration Values
     static constexpr uint32_t CMD_GCONF = 0x000000B1;
     static constexpr uint32_t CMD_NODECONF = 0x00000200;
-    static constexpr uint32_t CMD_IHOLD_IRUN = 0x00071008; // Irun 1A, Ihold 25%, delay hold 7
+    static constexpr uint32_t CMD_IHOLD_IRUN = 0x0008301E; // Irun 1A, Ihold 25%, delay hold 7
     static constexpr uint32_t CMD_TPOWERDOWN = 0x00000014; // motor sleep
     static constexpr uint32_t CMD_CHOPCONF = 0x14000003;   // 1/16 microstep, interpolation
 };

@@ -9,10 +9,7 @@
 
 #pragma once
 
-#include <cstdint>
-
-namespace CNC
-{
+#include <stdint.h>
 
 /**
  * @enum Plane
@@ -47,6 +44,8 @@ enum class DataSource
     UART  ///< UART/Serial connection
 };
 
+
+
 /**
  * @struct MachineConfig
  * @brief Main machine configuration structure
@@ -58,9 +57,6 @@ struct MachineConfig
     /// Default feed rate in units/minute
     float defaultFeedRate = 500.0f;
 
-    /// Acceleration value in units/second²
-    float acceleration = 100.0f;
-
     /// Default working plane
     Plane defaultPlane = Plane::XY;
 
@@ -70,16 +66,21 @@ struct MachineConfig
     /// Default data source for commands
     DataSource defaultDataSource = DataSource::None;
 
-    /**
-     * @struct StepsPerMM
-     * @brief Stepper motor calibration parameters
-     * @details Defines the relationship between physical distances and stepper motor steps
-     */
-    struct
+    float stepsPerMM_XY = 1600.0f; ///< Steps per millimeter for X, Y axis
+    float stepsPerMM_Z = 1600.0f;  ///< Steps per millimeter for Z axis
+
+    uint32_t startingSpeedToArr = 5000; //  2khz
+    uint32_t defaultTargetspeedToArr = 100; //  10khz
+
+    struct Acceleration {
+        uint16_t increase = 25;
+        uint16_t steps = 0;
+    } acceleration;
+    
+    MachineConfig()
     {
-        float x = 80.0f;  ///< Steps per millimeter for X axis
-        float y = 80.0f;  ///< Steps per millimeter for Y axis
-        float z = 400.0f; ///< Steps per millimeter for Z axis
-    } stepsPerMM;
+        acceleration.steps =
+            (startingSpeedToArr - defaultTargetspeedToArr)
+            / acceleration.increase;
+    }
 };
-} // namespace CNC
