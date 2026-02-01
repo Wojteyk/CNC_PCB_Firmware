@@ -30,7 +30,7 @@ ILI9341 displayDriver(&hspi1,
                       LCD_RST_GPIO_Port,
                       LCD_RST_Pin);
 
-DisplayController<ILI9341> dispController(displayDriver);
+DisplayController<ILI9341, XPT2046> dispController(displayDriver, touch);
 
 extern "C" void cpp_main()
 {
@@ -38,37 +38,17 @@ extern "C" void cpp_main()
     auto res = mController.init();
     if (!res.isOk())
     {
-    //    ErrorHandler::report(res.error);
+        //    ErrorHandler::report(res.error);
     }
 
     dispController.start();
     touch.init();
+    gParser.start();
+    planner.start();
 
-    bool wasPressed = false;
-    uint8_t is = 1;
-
-    while(1) {
-        vTaskDelay(pdMS_TO_TICKS(50)); 
-
-        bool isCurrentlyPressed = touch.isPressed();
-
-        if (isCurrentlyPressed && !wasPressed) {
-            
-            XPT2046::Point p = touch.getPoint();
-            
-            wasPressed = true; 
-        }
-
-        else if (!isCurrentlyPressed && wasPressed) {
-            HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-            if(is)
-            {
-                planner.start();
-                gParser.start();
-                is =0;
-            }
-            wasPressed = false;
-        }
+    while (1)
+    {
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }
 

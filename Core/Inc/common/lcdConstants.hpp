@@ -17,7 +17,7 @@ namespace Colors {
     static constexpr uint16_t DarkGrey    = 0x7BEF; 
     static constexpr uint16_t BlueishGrey = 0x4A69; 
     
-    static constexpr uint16_t Background  = Black;
+    static constexpr uint16_t Background  = DarkGrey;
     static constexpr uint16_t Text        = White;
     static constexpr uint16_t Error       = Red;       
     static constexpr uint16_t Success     = Green;    

@@ -6,10 +6,11 @@
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_spi.h"
 #include "common/systemError.hpp"
+#include "display/iGuiDriver.hpp"
 
 #define LCD_BUFFER_SIZE 1600
 
-class ILI9341
+class ILI9341 : public IGuiDriver
 {
 
   public:
@@ -23,17 +24,15 @@ class ILI9341
 
     Result<void> init();
 
-    Result<void> fillScreen(uint16_t color);
+    Result<void> fillScreen(uint16_t color) override;
 
     void handleTxComplete();
 
-    Result<void> setWindow(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1);
+    Result<void> setWindow(int16_t x0, int16_t x1, int16_t y0, int16_t y1);
 
-    Result<void> fillRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color);
+    Result<void> fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) override;
 
-    Result<void> drawChar(uint16_t x, uint16_t y, char c, uint16_t color, uint16_t bg);
-
-    Result<void> drawString(uint16_t x, uint16_t y, const char* str, uint16_t color, uint16_t bg);
+    Result<void> drawString(int16_t x, int16_t y, const char* str, uint16_t color, uint16_t bg) override;
 
   private:
     SPI_HandleTypeDef* _hspi;
@@ -51,6 +50,7 @@ class ILI9341
     Result<void> writeData(uint8_t data);
     Result<void> writeData16(uint16_t data);
     Result<void> pushColorBlock(uint32_t color, uint32_t pixelCnt);
+    Result<void> drawChar(uint16_t x, uint16_t y, char c, uint16_t color, uint16_t bg);
 
     static constexpr uint16_t Y_MAX = 239;
     static constexpr uint16_t X_MAX = 319;

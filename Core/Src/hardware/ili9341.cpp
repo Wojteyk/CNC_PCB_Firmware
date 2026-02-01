@@ -50,7 +50,7 @@ Result<void> ILI9341::init()
     return Result<void>(ErrorCode::Ok);
 }
 
-Result<void> ILI9341::setWindow(uint16_t x0, uint16_t x1, uint16_t y0, uint16_t y1)
+Result<void> ILI9341::setWindow(int16_t x0, int16_t x1, int16_t y0, int16_t y1)
 {
     //  (X)
     if (auto res = writeCmd(0x2A); !res.isOk())
@@ -79,7 +79,7 @@ Result<void> ILI9341::fillScreen(uint16_t color)
     return Result<void>(ErrorCode::Ok);
 }
 
-Result<void> ILI9341::fillRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
+Result<void> ILI9341::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
 {
     if (x > X_MAX || y > Y_MAX)
         return Result<void>(ErrorCode::LCD_OutOfRange);
@@ -173,7 +173,7 @@ Result<void> ILI9341::drawChar(uint16_t x, uint16_t y, char c, uint16_t color, u
     return Result<void>(ErrorCode::Ok);
 }
 
-Result<void> ILI9341::drawString(uint16_t x, uint16_t y, const char* str, uint16_t color, uint16_t bg)
+Result<void> ILI9341::drawString(int16_t x, int16_t y, const char* str, uint16_t color, uint16_t bg)
 {
     while(*str)
     {

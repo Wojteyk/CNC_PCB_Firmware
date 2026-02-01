@@ -2,13 +2,16 @@
 #include "common/cppTask.hpp"
 #include "common/lcdConstants.hpp"
 #include "common/systemError.hpp"
+#include "display/view.hpp"
+#include "hardware/xpt2046.hpp"
 
-template <typename lcdDriver> class DisplayController : public CppTask
+template <typename LcdDriver, typename TouchDriver> class DisplayController : public CppTask
 {
   public:
-    DisplayController(lcdDriver& screenDriver)
+    DisplayController(LcdDriver& screenDriver, TouchDriver& touchDriver)
         : CppTask("Gui", 4096, 5)
         , _screenDriver(screenDriver)
+        , _touchDriver(touchDriver)
     {
     }
 
@@ -18,38 +21,35 @@ template <typename lcdDriver> class DisplayController : public CppTask
         if (auto res = _screenDriver.init(); !res.isOk())
             ErrorHandler::report(res.error);
 
-        if (auto res = drawMainPage(); !res.isOk())
-        ErrorHandler::report(res.error);
+        _currentView = &_mainMenu;
+        _screenDriver.fillScreen(Colors::DarkGrey);
+        bool alreadyPressed = false;
         while (1)
         {
-            vTaskDelay(pdMS_TO_TICKS(2000));
+            if (_currentView)
+            {
+                if (_touchDriver.isPressed())
+                {
+                    if (!alreadyPressed)
+                    {
+                        _currentView->handleTouch(_touchDriver.getPoint());
+                        alreadyPressed = true;
+                    }
+                }
+                else
+                {
+                    alreadyPressed = false;
+                }
+
+                _currentView->drawAll(_screenDriver);
+            }
+            vTaskDelay(pdMS_TO_TICKS(50));
         }
     }
 
   private:
-    Result<void> drawMainPage()
-    {
-        if (auto res = _screenDriver.fillScreen(Colors::DarkGrey); !res.isOk())
-            return res;
-
-        if (auto res = _screenDriver.drawString(132, 20, "CNC  PCB", Colors::Blue, Colors::DarkGrey);
-            !res.isOk())
-            return res;
-
-        if (auto res = _screenDriver.fillRect(100, 40, 120, 40,  Colors::Cyan);
-            !res.isOk())
-            return res;
-
-        if (auto res = _screenDriver.drawString(145, 55, "START", Colors::DarkGrey, Colors::Cyan);
-            !res.isOk())
-            return res;
-
-        if (auto res = _screenDriver.fillRect(100, 120, 120, 40,  Colors::Cyan);
-            !res.isOk())
-            return res;
-        
-        return Result<void>(ErrorCode::Ok);
-    }
-
-    lcdDriver& _screenDriver;
+    LcdDriver& _screenDriver;
+    MainMenu _mainMenu;
+    View* _currentView = &_mainMenu;
+    TouchDriver& _touchDriver;
 };

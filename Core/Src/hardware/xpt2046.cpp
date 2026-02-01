@@ -40,7 +40,7 @@ long XPT2046::map(long x, long in_min, long in_max, long out_min, long out_max) 
         return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
     }
 
-XPT2046::Point XPT2046::getPoint()
+Point XPT2046::getPoint()
 {
     if(!isPressed()) return {-1,-1};
     uint16_t rawX = getRaw(GET_X_CMD);

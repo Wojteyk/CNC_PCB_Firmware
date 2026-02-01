@@ -9,10 +9,7 @@
 
 void GcodeParser::run()
 {
-    {
-        while (true)
-        {
-            auto res = parseLine("G1 Z4");
+    auto res = parseLine("G1 Z4");
 
             if (res.isOk())
             {
@@ -33,10 +30,11 @@ void GcodeParser::run()
             {
                 ErrorHandler::report(res2.error);
             }
+        while (true)
+        {
 
              vTaskDelay(pdMS_TO_TICKS(1000)); 
         }
-    }
 }
 
 Result<MotionCmd> GcodeParser::parseLine(std::string_view line)

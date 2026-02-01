@@ -5,6 +5,11 @@
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_spi.h"
 
+struct Point
+{
+    int16_t x;
+    int16_t y;
+};
 
 class XPT2046
 {
@@ -14,12 +19,6 @@ class XPT2046
             uint16_t csPin,
             GPIO_TypeDef* irqPort,
             uint16_t irqPin);
-
-    struct Point
-    {
-        int16_t x;
-        int16_t y;
-    };
 
     void init();
 
