@@ -2,6 +2,7 @@
 #include "display/iGuiDriver.hpp"
 #include <cstring>
 #include "hardware/xpt2046.hpp"
+#include "queue.h"
 
 class Widget
 {
@@ -69,18 +70,22 @@ class Label : public Widget
 class Button : public Widget
 {
   public:
+    using ClickAction = void (*)();
+
     Button(int16_t x,
            int16_t y,
            int16_t w,
            int16_t h,
            const char* text,
            uint16_t textColor,
-           uint16_t color)
+           uint16_t color,
+           ClickAction action = nullptr)
         : Widget(x, y, w, h)
         , _text(text)
         , _textColor(textColor)
         , _color(color)
         , _redraw(true)
+        ,_action(action)
     {
     }
 
@@ -112,8 +117,10 @@ class Button : public Widget
         if (p.x >= _x && p.x <= (_x + _w) && p.y >= _y && p.y <= (_y + _h))
         {
             setParams(_text, Colors::Red, _color);
-            if (guiEventQueue != nullptr) {
-                xQueueSend(guiEventQueue, &_event, 0);
+            if (_action) 
+            {
+                _action();
+                _redraw = true;                
             }
         }
     }
@@ -123,4 +130,5 @@ class Button : public Widget
     uint16_t _textColor;
     uint16_t _color;
     bool _redraw;
+    ClickAction _action;
 };

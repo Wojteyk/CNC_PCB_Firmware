@@ -9,7 +9,20 @@
 
 void GcodeParser::run()
 {
-    auto res = parseLine("G1 Z4");
+    char lineBuffer[64];
+    const char* startupCmds[] = {"G1 Z4", "G1 Z-4"};
+    for (const char* c : startupCmds)
+    {
+        auto res = parseLine(c);
+        if (res.isOk())
+            xQueueSend(_targetQueue, &res.value, portMAX_DELAY);
+    }
+    while (true)
+    {
+        if (xQueueReceive(_inputQueue, &lineBuffer, portMAX_DELAY) == pdPASS)
+        {
+            std::string_view s(lineBuffer);
+            auto res = parseLine(s);
 
             if (res.isOk())
             {
@@ -19,22 +32,8 @@ void GcodeParser::run()
             {
                 ErrorHandler::report(res.error);
             }
-
-            auto res2 = parseLine("G1 Z-4");
-
-            if (res2.isOk())
-            {
-                xQueueSend(_targetQueue, &res2.value, portMAX_DELAY);
-            }
-            else
-            {
-                ErrorHandler::report(res2.error);
-            }
-        while (true)
-        {
-
-             vTaskDelay(pdMS_TO_TICKS(1000)); 
         }
+    }
 }
 
 Result<MotionCmd> GcodeParser::parseLine(std::string_view line)

@@ -35,10 +35,16 @@
 class GcodeParser : public CppTask
 {
   public:
-    GcodeParser(QueueHandle_t targetQueue)
-        :  CppTask("Gcode", 512, 2),
-        _targetQueue(targetQueue)
+    GcodeParser(QueueHandle_t targetQueue, QueueHandle_t inputQueue)
+        : CppTask("Gcode", 512, 2)
+        , _targetQueue(targetQueue)
+        , _inputQueue(inputQueue)
     {
+    }
+
+    void setInputQueue(QueueHandle_t inputQueue)
+    {
+      _inputQueue = inputQueue;
     }
 
   protected:
@@ -98,4 +104,5 @@ class GcodeParser : public CppTask
     bool parseInt(std::string_view& number, int& value);
 
     QueueHandle_t _targetQueue;
+    QueueHandle_t _inputQueue;
 };

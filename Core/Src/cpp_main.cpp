@@ -8,11 +8,15 @@
 #include "hardware/montionController.hpp"
 #include "common/machineConfig.hpp"
 #include "hardware/xpt2046.hpp"
+#include "FreeRTOS.h"
+#include "queue.h"
 
 extern "C" SPI_HandleTypeDef hspi1;
 extern "C" SPI_HandleTypeDef hspi2;
 extern "C" UART_HandleTypeDef huart1;
 extern "C" TIM_HandleTypeDef htim10;
+
+QueueHandle_t gcodeQueue = nullptr;
 
 MachineConfig globalConfig;
 
@@ -20,7 +24,7 @@ XPT2046 touch(&hspi2, TOUCH_CS_GPIO_Port, TOUCH_CS_Pin, TOUCH_IRQ_GPIO_Port, TOU
 TMC2209 zAxis(&huart1, 0, ZAXIS_DIR_GPIO_Port, ZAXIS_DIR_Pin, ZAXIS_STEP_GPIO_Port, ZAXIS_STEP_Pin);
 MotionController<TMC2209> mController(&htim10, zAxis, zAxis, zAxis, globalConfig);
 Planner<TMC2209> planner(&mController, globalConfig);
-GcodeParser gParser(planner.getQueueHandle());
+GcodeParser gParser(planner.getQueueHandle(), gcodeQueue);
 
 ILI9341 displayDriver(&hspi1,
                       LCD_CS_GPIO_Port,
@@ -34,6 +38,9 @@ DisplayController<ILI9341, XPT2046> dispController(displayDriver, touch);
 
 extern "C" void cpp_main()
 {
+    gcodeQueue = xQueueCreate(10,64);
+
+    gParser.setInputQueue(gcodeQueue);
 
     auto res = mController.init();
     if (!res.isOk())
@@ -43,8 +50,9 @@ extern "C" void cpp_main()
 
     dispController.start();
     touch.init();
-    gParser.start();
     planner.start();
+    gParser.start();
+    
 
     while (1)
     {

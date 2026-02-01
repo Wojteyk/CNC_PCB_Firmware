@@ -14,7 +14,7 @@ template <typename T> class Planner : public CppTask
     Planner(MotionController<T>* controller, const MachineConfig& config)
         : CppTask("Planner", 1024, 2)
         , _config(config)
-        ,_controller(controller)
+        , _controller(controller)
     {
         _montionQueue = xQueueCreate(queueSize, sizeof(MotionCmd));
     }
@@ -41,42 +41,67 @@ template <typename T> class Planner : public CppTask
     }
 
   private:
-
     StepCmd calculateSteps(const MotionCmd& cmd)
     {
         StepCmd stepCmd;
 
-        int32_t targetStepsX =
-            static_cast<int32_t>(cmd.x.value_or(_state.currentX) * _config.stepsPerMM_XY);
-        int32_t targetStepsY =
-            static_cast<int32_t>(cmd.y.value_or(_state.currentY) * _config.stepsPerMM_XY);
-        int32_t targetStepsZ =
-            static_cast<int32_t>(cmd.z.value_or(_state.currentZ) * _config.stepsPerMM_Z);
+        float targetX = _state.currentX;
+        float targetY = _state.currentY;
+        float targetZ = _state.currentZ;
+
+        if (cmd.x.has_value())
+        {
+            targetX = (cmd.motion == MotionType::MoveOnce) ? (_state.currentX + *cmd.x) : *cmd.x;
+        }
+        if (cmd.y.has_value())
+        {
+            targetY = (cmd.motion == MotionType::MoveOnce) ? (_state.currentY + *cmd.y) : *cmd.y;
+        }
+        if (cmd.z.has_value())
+        {
+            targetZ = (cmd.motion == MotionType::MoveOnce) ? (_state.currentZ + *cmd.z) : *cmd.z;
+        }
+
+        int32_t targetStepsX = static_cast<int32_t>(targetX * _config.stepsPerMM_XY);
+        int32_t targetStepsY = static_cast<int32_t>(targetY * _config.stepsPerMM_XY);
+        int32_t targetStepsZ = static_cast<int32_t>(targetZ * _config.stepsPerMM_Z);
 
         stepCmd.dX = std::abs(targetStepsX - _state.stepX);
         stepCmd.dY = std::abs(targetStepsY - _state.stepY);
         stepCmd.dZ = std::abs(targetStepsZ - _state.stepZ);
 
         stepCmd.dirMask = 0;
-        if(targetStepsX >= _state.stepX) stepCmd.dirMask |=1;   // bit for x
-        if(targetStepsY >= _state.stepY) stepCmd.dirMask |=2;   // bit for y
-        if(targetStepsZ >= _state.stepZ) stepCmd.dirMask |=4;   // bit for z
+        if (targetStepsX >= _state.stepX)
+            stepCmd.dirMask |= 1; // bit for x
+        if (targetStepsY >= _state.stepY)
+            stepCmd.dirMask |= 2; // bit for y
+        if (targetStepsZ >= _state.stepZ)
+            stepCmd.dirMask |= 4; // bit for z
 
         _state.stepX = targetStepsX;
         _state.stepY = targetStepsY;
         _state.stepZ = targetStepsZ;
-        _state.currentX = cmd.x.value_or(_state.currentX);
-        _state.currentY = cmd.y.value_or(_state.currentY);
-        _state.currentZ = cmd.z.value_or(_state.currentZ);
+        _state.currentX = targetX;
+        _state.currentY = targetY;
+        _state.currentZ = targetZ;
 
         stepCmd.totalSteps = std::max({stepCmd.dX, stepCmd.dY, stepCmd.dZ});
 
         stepCmd.startArr = _config.startingSpeedToArr;
         stepCmd.targetArr = _config.defaultTargetspeedToArr;
-        stepCmd.accelSteps = _config.acceleration.steps;
-        stepCmd.decelSteps = stepCmd.totalSteps -  _config.acceleration.steps; 
+        if (stepCmd.totalSteps <= _config.acceleration.steps * 2)
+        {
+            stepCmd.accelSteps = stepCmd.totalSteps / 2;
+            stepCmd.decelSteps = stepCmd.totalSteps / 2;
+        }
+        else
+        {
+            stepCmd.accelSteps = _config.acceleration.steps;
+            stepCmd.decelSteps = stepCmd.totalSteps - _config.acceleration.steps;
+        }
 
-        if (stepCmd.totalSteps == 0) return stepCmd;
+        if (stepCmd.totalSteps == 0)
+            return stepCmd;
 
         return stepCmd;
     }

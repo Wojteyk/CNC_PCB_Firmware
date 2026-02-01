@@ -24,7 +24,8 @@ enum struct MotionType : uint8_t
     Linear = 1, ///< Linear interpolation (G1) - controlled speed
     ArcCw = 2,  ///< Clockwise arc (G2) - circular motion
     ArcCCw = 3, ///< Counter-clockwise arc (G3) - circular motion
-    None = 4    ///< No motion specified
+    None = 4,    ///< No motion specified
+    MoveOnce = 91,
 };
 
 struct MachineState
