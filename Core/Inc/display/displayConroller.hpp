@@ -21,11 +21,21 @@ template <typename LcdDriver, typename TouchDriver> class DisplayController : pu
         if (auto res = _screenDriver.init(); !res.isOk())
             ErrorHandler::report(res.error);
 
-        _currentView = &_mainMenu;
-        _screenDriver.fillScreen(Colors::DarkGrey);
+        GuiEvent event;
+
         bool alreadyPressed = false;
         while (1)
         {
+            if (xQueueReceive(guiEventQueue, &event, 0) == pdPASS)
+            {
+                if (event == GuiEvent::ShowControls)
+                    _currentView = &_controls;
+                else if (event == GuiEvent::ShowMain)
+                    _currentView = &_mainMenu;
+
+                _screenDriver.fillScreen(Colors::Background);
+                _currentView->forceRedraw();
+            }
             if (_currentView)
             {
                 if (_touchDriver.isPressed())
@@ -41,7 +51,10 @@ template <typename LcdDriver, typename TouchDriver> class DisplayController : pu
                     alreadyPressed = false;
                 }
 
-                _currentView->drawAll(_screenDriver);
+                if (_currentView)
+                {
+                    _currentView->drawAll(_screenDriver);
+                }
             }
             vTaskDelay(pdMS_TO_TICKS(50));
         }
@@ -50,6 +63,7 @@ template <typename LcdDriver, typename TouchDriver> class DisplayController : pu
   private:
     LcdDriver& _screenDriver;
     MainMenu _mainMenu;
+    Controls _controls;
     View* _currentView = &_mainMenu;
     TouchDriver& _touchDriver;
 };

@@ -27,6 +27,12 @@ class View
         }
     }
 
+    void forceRedraw() {
+        for (uint8_t i = 0; i < _widgetCnt; i++) {
+            _widgets[i]->forceRedraw(); 
+        }
+    }
+
   protected:
     void addWidget(Widget* w)
     {
@@ -48,7 +54,7 @@ class MainMenu : public View
     MainMenu()
         : _mainLabel(135, 20, "CNC PCB", Colors::Blue)
         , _btnStart(100, 40, 120, 40, "START", Colors::White, Colors::Green)
-        , _btnControl(100, 100, 120, 40, "Controls", Colors::White, Colors::BlueishGrey,sendGcodeX)
+        , _btnControl(100, 100, 120, 40, "Controls", Colors::White, Colors::BlueishGrey,moveToControls )
         , _btnSettings(100, 160, 120, 40, "SETUP", Colors::White, Colors::Blue)
     {
         addWidget(&_mainLabel);
@@ -57,7 +63,35 @@ class MainMenu : public View
         addWidget(&_btnSettings);
     }
 
-    static void sendGcodeX()
+    static void moveToControls()
+    {
+        GuiEvent ev = GuiEvent::ShowControls;
+        xQueueSend(guiEventQueue, &ev, 0);
+    }
+
+  private:
+    Label _mainLabel;
+    Button _btnStart;
+    Button _btnControl;
+    Button _btnSettings;
+};
+
+class Controls : public View
+{
+  public:
+    Controls()
+        : _mainLabel(135, 20, "Controls", Colors::Blue)
+        , _btnUpZ(200, 40, 60, 40, "Z +", Colors::White, Colors::LightGrey, sendGcodeZUp)
+        , _btnDownZ(200, 100, 60, 40, "Z -", Colors::White, Colors::LightGrey, sendGcodeZDown)
+        , _btnBack(260, 180, 60, 40, "Back", Colors::White, Colors::Orange,backToMenu )
+    {
+        addWidget(&_mainLabel);
+        addWidget(&_btnUpZ);
+        addWidget(&_btnDownZ);
+        addWidget(&_btnBack);
+    }
+
+    static void sendGcodeZUp()
     {
         if (gcodeQueue != nullptr)
         {
@@ -66,9 +100,24 @@ class MainMenu : public View
         }
     }
 
+    static void sendGcodeZDown()
+    {
+        if (gcodeQueue != nullptr)
+        {
+            const char* cmd = "G91 Z-1";
+            xQueueSend(gcodeQueue, cmd, 0);
+        }
+    }
+
+    static void backToMenu()
+    {
+        GuiEvent ev = GuiEvent::ShowMain;
+        xQueueSend(guiEventQueue, &ev, 0);
+    }
+
   private:
     Label _mainLabel;
-    Button _btnStart;
-    Button _btnControl;
-    Button _btnSettings;
+    Button _btnUpZ;
+    Button _btnDownZ;
+    Button _btnBack;
 };

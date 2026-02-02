@@ -12,6 +12,7 @@ class Widget
         , _y(y)
         , _w(w)
         , _h(h)
+        , _redraw(true)
     {
     }
 
@@ -43,7 +44,6 @@ class Label : public Widget
         : Widget(x, y, 0, 0)
         , _text(text)
         , _color(color)
-        , _redraw(true)
     {
     }
 
@@ -64,7 +64,6 @@ class Label : public Widget
   private:
     const char* _text;
     uint16_t _color;
-    bool _redraw;
 };
 
 class Button : public Widget
@@ -84,8 +83,9 @@ class Button : public Widget
         , _text(text)
         , _textColor(textColor)
         , _color(color)
-        , _redraw(true)
-        ,_action(action)
+        , _action(action)
+        , _pressed(false)
+        ,_prevColor(color)
     {
     }
 
@@ -102,6 +102,7 @@ class Button : public Widget
         driver.drawString(textX, textY, _text, _textColor, _color);
 
         _redraw = false;
+        pressAnimation(_pressed);
     }
 
     void setParams(const char* text, uint16_t textColor, uint16_t color)
@@ -116,19 +117,31 @@ class Button : public Widget
     {
         if (p.x >= _x && p.x <= (_x + _w) && p.y >= _y && p.y <= (_y + _h))
         {
-            setParams(_text, Colors::Red, _color);
-            if (_action) 
+            setParams(_text, _textColor, Colors::White);
+            _pressed = true;
+            if (_action)
             {
                 _action();
-                _redraw = true;                
             }
+            _redraw = true;
         }
     }
 
   private:
+    void pressAnimation(bool pressed)
+    {
+        if (pressed)
+        {
+            setParams(_text, _textColor, _prevColor);
+            _redraw = true;
+            _pressed = false;
+        }
+    }
+
     const char* _text;
     uint16_t _textColor;
     uint16_t _color;
-    bool _redraw;
     ClickAction _action;
+    bool _pressed;
+    uint16_t _prevColor;
 };

@@ -16,7 +16,9 @@ extern "C" SPI_HandleTypeDef hspi2;
 extern "C" UART_HandleTypeDef huart1;
 extern "C" TIM_HandleTypeDef htim10;
 
+size_t freeHeapNow;
 QueueHandle_t gcodeQueue = nullptr;
+QueueHandle_t guiEventQueue = nullptr;
 
 MachineConfig globalConfig;
 
@@ -39,6 +41,7 @@ DisplayController<ILI9341, XPT2046> dispController(displayDriver, touch);
 extern "C" void cpp_main()
 {
     gcodeQueue = xQueueCreate(10,64);
+    guiEventQueue = xQueueCreate(5, sizeof(GuiEvent));
 
     gParser.setInputQueue(gcodeQueue);
 
@@ -56,7 +59,8 @@ extern "C" void cpp_main()
 
     while (1)
     {
-        vTaskDelay(pdMS_TO_TICKS(50));
+        freeHeapNow = xPortGetFreeHeapSize();
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
 

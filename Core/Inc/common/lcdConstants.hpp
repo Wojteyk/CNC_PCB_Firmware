@@ -1,5 +1,13 @@
 #pragma once
 #include <stdint.h>
+#include "queue.h"
+
+enum class GuiEvent : uint8_t {
+    ShowMain,
+    ShowControls
+};
+
+extern QueueHandle_t guiEventQueue;
 
 namespace Colors {
 
