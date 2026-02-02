@@ -78,5 +78,8 @@ struct StepCmd
     uint32_t decelSteps; 
 
     uint8_t dirMask;
+
+    uint16_t accIncrease;
+    bool slowDown;
 };
 

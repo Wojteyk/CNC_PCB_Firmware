@@ -7,6 +7,13 @@ enum class GuiEvent : uint8_t {
     ShowControls
 };
 
+enum struct TouchState
+{
+    IDLE,
+    PRESSED,
+    HOLD,
+};
+
 extern QueueHandle_t guiEventQueue;
 
 namespace Colors {

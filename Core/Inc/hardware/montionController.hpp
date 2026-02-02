@@ -16,7 +16,11 @@ static constexpr uint8_t HW_QUEUE_SIZE = 32;
 template <typename driver> class MotionController
 {
   public:
-    MotionController(TIM_HandleTypeDef* tim, driver& axisX, driver& axisY, driver& axisZ,const MachineConfig& config)
+    MotionController(TIM_HandleTypeDef* tim,
+                     driver& axisX,
+                     driver& axisY,
+                     driver& axisZ,
+                     const MachineConfig& config)
         : _tim(tim)
         , _axisX(axisX)
         , _axisY(axisY)
@@ -41,7 +45,7 @@ template <typename driver> class MotionController
         if (auto res = _axisZ.init(); !res.isOk())
             return res;
 
-        _currentArr = 5000;
+        _currentArr = _config.startingSpeedToArr;
         __HAL_TIM_SET_AUTORELOAD(_tim, _currentArr); // safe feedrate at the start
 
         if (HAL_TIM_Base_Start_IT(_tim) != HAL_OK)
@@ -53,10 +57,11 @@ template <typename driver> class MotionController
 
     void addMove(const StepCmd& stepCmd)
     {
+
         xQueueSend(_stepsQueue, &stepCmd, portMAX_DELAY);
     }
 
-    void tick() // pls dont use freertos here
+    void tick()
     {
         // HAL_GPIO_TogglePin(STEP_X_GPIO_Port, STEP_X_Pin);
 
@@ -115,8 +120,8 @@ template <typename driver> class MotionController
         {
             if (_currentArr > _currentCmd.targetArr)
             {
-                if (_currentArr > (_currentCmd.targetArr + _config.acceleration.increase))
-                    _currentArr -= _config.acceleration.increase; 
+                if (_currentArr > (_currentCmd.targetArr + _currentCmd.accIncrease))
+                    _currentArr -= _currentCmd.accIncrease;
                 else
                     _currentArr = _currentCmd.targetArr;
 
@@ -124,19 +129,18 @@ template <typename driver> class MotionController
             }
         }
 
-        else if (_dda.currentSteps >= _currentCmd.decelSteps)
+        else if (_dda.currentSteps >= _currentCmd.decelSteps && _currentCmd.slowDown)
         {
             if (_currentArr < _currentCmd.startArr)
             {
-                if (_currentArr < (_currentCmd.startArr - _config.acceleration.increase))
-                    _currentArr += _config.acceleration.increase; 
+                if (_currentArr < (_currentCmd.startArr - _currentCmd.accIncrease))
+                    _currentArr += _currentCmd.accIncrease;
                 else
-                    _currentArr = _currentCmd.targetArr; 
+                    _currentArr = _currentCmd.startArr;
                 arrChanged = true;
             }
         }
 
-        // Aplikacja zmian do sprzętu
         if (arrChanged)
         {
             __HAL_TIM_SET_AUTORELOAD(_tim, _currentArr);
@@ -147,7 +151,7 @@ template <typename driver> class MotionController
             if (!tryLoadNextCommand())
             {
                 _isActive = false;
-                __HAL_TIM_SET_AUTORELOAD(_tim, 5000);
+                __HAL_TIM_SET_AUTORELOAD(_tim, _config.startingSpeedToArr);
             }
         }
     }
@@ -182,8 +186,8 @@ template <typename driver> class MotionController
     driver& _axisY;
     driver& _axisZ;
 
-    bool _isActive = false;
-    uint32_t _currentArr;
+    volatile bool _isActive = false;
+    volatile uint32_t _currentArr;
 
     StepCmd _currentCmd;
     QueueHandle_t _stepsQueue;

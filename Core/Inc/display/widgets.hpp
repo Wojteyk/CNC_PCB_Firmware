@@ -23,6 +23,13 @@ class Widget
     virtual void checkTouch(Point p)
     {
     }
+    virtual void checkHold(Point p)
+    {
+    }
+
+    virtual void release()
+    {
+    }
 
     void forceRedraw()
     {
@@ -78,14 +85,18 @@ class Button : public Widget
            const char* text,
            uint16_t textColor,
            uint16_t color,
-           ClickAction action = nullptr)
+           ClickAction action = nullptr,
+           ClickAction actionHold = nullptr,
+           ClickAction actionRelease = nullptr)
         : Widget(x, y, w, h)
         , _text(text)
         , _textColor(textColor)
         , _color(color)
         , _action(action)
+        , _actionHold(actionHold)
+        , _actionRelease(actionRelease)
         , _pressed(false)
-        ,_prevColor(color)
+        , _prevColor(color)
     {
     }
 
@@ -115,14 +126,34 @@ class Button : public Widget
 
     void checkTouch(Point p) override
     {
-        if (p.x >= _x && p.x <= (_x + _w) && p.y >= _y && p.y <= (_y + _h))
+        if (isInside(p))
         {
-            setParams(_text, _textColor, Colors::White);
             _pressed = true;
+            _color = Colors::White;
+            _redraw = true;
             if (_action)
-            {
                 _action();
-            }
+        }
+    }
+
+    void checkHold(Point p) override
+    {
+        if (isInside(p))
+        {
+            _pressed = true;
+            _color = Colors::White;
+            _redraw = true;
+            if (_actionHold)
+                _actionHold();
+        }
+    }
+
+    void release() override
+    {
+        if (_pressed)
+        {
+            _pressed = false;
+            _color = _prevColor;
             _redraw = true;
         }
     }
@@ -138,10 +169,17 @@ class Button : public Widget
         }
     }
 
+    bool isInside(Point p)
+    {
+        return (p.x >= _x && p.x <= (_x + _w) && p.y >= _y && p.y <= (_y + _h));
+    }
+
     const char* _text;
     uint16_t _textColor;
     uint16_t _color;
     ClickAction _action;
+    ClickAction _actionHold;
+    ClickAction _actionRelease;
     bool _pressed;
     uint16_t _prevColor;
 };

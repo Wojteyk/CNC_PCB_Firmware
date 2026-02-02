@@ -44,8 +44,6 @@ enum class DataSource
     UART  ///< UART/Serial connection
 };
 
-
-
 /**
  * @struct MachineConfig
  * @brief Main machine configuration structure
@@ -69,18 +67,25 @@ struct MachineConfig
     float stepsPerMM_XY = 1600.0f; ///< Steps per millimeter for X, Y axis
     float stepsPerMM_Z = 1600.0f;  ///< Steps per millimeter for Z axis
 
-    uint32_t startingSpeedToArr = 5000; //  2khz
-    uint32_t defaultTargetspeedToArr = 100; //  10khz
+    uint32_t startingSpeedToArr = 2500;     //  400hz
+    uint32_t defaultTargetSpeedToArr = 100; //  10khz
+    uint32_t rapidTargetSpeedToArr = 70;    // ~14khz
 
-    struct Acceleration {
-        uint16_t increase = 25;
-        uint16_t steps = 0;
-    } acceleration;
-    
+    struct Acceleration
+    {
+        uint16_t increase;
+        uint16_t steps;
+    };
+
+    Acceleration defaultAcceleration = {25, 0};
+    Acceleration rapidAcceleration = {10, 0};
+
     MachineConfig()
     {
-        acceleration.steps =
-            (startingSpeedToArr - defaultTargetspeedToArr)
-            / acceleration.increase;
+        defaultAcceleration.steps =
+            (startingSpeedToArr - defaultTargetSpeedToArr) / defaultAcceleration.increase;
+
+        rapidAcceleration.steps =
+            (startingSpeedToArr - rapidTargetSpeedToArr) / rapidAcceleration.increase;
     }
 };

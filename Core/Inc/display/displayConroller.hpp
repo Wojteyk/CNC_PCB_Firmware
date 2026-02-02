@@ -22,8 +22,10 @@ template <typename LcdDriver, typename TouchDriver> class DisplayController : pu
             ErrorHandler::report(res.error);
 
         GuiEvent event;
+        TouchState touchState = TouchState::IDLE;
+        uint8_t holdCnt = 0;
+        Point lastPoint = {0, 0};
 
-        bool alreadyPressed = false;
         while (1)
         {
             if (xQueueReceive(guiEventQueue, &event, 0) == pdPASS)
@@ -36,26 +38,57 @@ template <typename LcdDriver, typename TouchDriver> class DisplayController : pu
                 _screenDriver.fillScreen(Colors::Background);
                 _currentView->forceRedraw();
             }
+
             if (_currentView)
             {
-                if (_touchDriver.isPressed())
-                {
-                    if (!alreadyPressed)
-                    {
-                        _currentView->handleTouch(_touchDriver.getPoint());
-                        alreadyPressed = true;
-                    }
-                }
-                else
-                {
-                    alreadyPressed = false;
-                }
+                bool pressed = _touchDriver.isPressed();
 
-                if (_currentView)
+                switch (touchState)
                 {
-                    _currentView->drawAll(_screenDriver);
+                case TouchState::IDLE:
+                    if (pressed)
+                    {
+                        lastPoint = _touchDriver.getPoint();
+                        _currentView->handleTouch(lastPoint);
+
+                        touchState = TouchState::PRESSED;
+                        holdCnt = 0;
+                    }
+                    break;
+
+                case TouchState::PRESSED:
+                    if (pressed)
+                    {
+                        if (++holdCnt > 8) 
+                        {
+                            touchState = TouchState::HOLD;
+                            holdCnt = 0;
+                        }
+                    }
+                    else
+                    {
+                        touchState = TouchState::IDLE;
+                    }
+                    break;
+
+                case TouchState::HOLD:
+                    if (pressed)
+                    {
+                        if (++holdCnt >= 5) 
+                        {
+                            _currentView->handleHold(_touchDriver.getPoint());
+                            holdCnt = 0;
+                        }
+                    }
+                    else
+                    {
+                        touchState = TouchState::IDLE;
+                    }
+                    break;
                 }
             }
+
+            _currentView->drawAll(_screenDriver);
             vTaskDelay(pdMS_TO_TICKS(50));
         }
     }

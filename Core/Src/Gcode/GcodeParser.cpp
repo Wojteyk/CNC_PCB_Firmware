@@ -10,13 +10,13 @@
 void GcodeParser::run()
 {
     char lineBuffer[64];
-    const char* startupCmds[] = {"G1 Z4", "G1 Z-4"};
-    for (const char* c : startupCmds)
-    {
-        auto res = parseLine(c);
-        if (res.isOk())
-            xQueueSend(_targetQueue, &res.value, portMAX_DELAY);
-    }
+    // const char* startupCmds[] = {"G0 Z4", "G0 Z8"};
+    // for (const char* c : startupCmds)
+    // {
+    //     auto res = parseLine(c);
+    //     if (res.isOk())
+    //         xQueueSend(_targetQueue, &res.value, portMAX_DELAY);
+    // }
     while (true)
     {
         if (xQueueReceive(_inputQueue, &lineBuffer, portMAX_DELAY) == pdPASS)
