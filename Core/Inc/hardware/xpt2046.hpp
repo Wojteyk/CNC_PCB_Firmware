@@ -4,6 +4,7 @@
 #include "stm32f4xx_hal.h"
 #include "stm32f4xx_hal_gpio.h"
 #include "stm32f4xx_hal_spi.h"
+#include "common/systemError.hpp"
 
 struct Point
 {
@@ -20,7 +21,7 @@ class XPT2046
             GPIO_TypeDef* irqPort,
             uint16_t irqPin);
 
-    void init();
+    Result<void> init();
 
     bool isPressed();
 

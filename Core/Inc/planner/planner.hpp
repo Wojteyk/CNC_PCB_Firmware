@@ -1,6 +1,7 @@
 #pragma once
 #include "common/cppTask.hpp"
 #include "FreeRTOS.h"
+#include "semphr.h"
 #include "hardware/motionController.hpp"
 #include "queue.h"
 #include <algorithm>
@@ -16,7 +17,9 @@ template <typename T> class Planner : public CppTask
         , _config(config)
         , _controller(controller)
     {
-        _motionQueue = xQueueCreate(queueSize, sizeof(MotionCmd));
+        _state = {};
+        _motionQueue = xQueueCreate(QUEUE_SIZE, sizeof(MotionCmd));
+        _stateMutex = xSemaphoreCreateMutex();
     }
 
     QueueHandle_t getQueueHandle() const
@@ -26,7 +29,13 @@ template <typename T> class Planner : public CppTask
 
     MachineState getCurrentState()
     {
-        return _state;
+        MachineState tempState;
+        if (xSemaphoreTake(_stateMutex, portMAX_DELAY) == pdTRUE)
+        {
+            tempState = _state;
+            xSemaphoreGive(_stateMutex);
+        }
+        return tempState;
     }
 
   protected:
@@ -104,17 +113,27 @@ template <typename T> class Planner : public CppTask
 
     void updateState(Target target)
     {
-        _state.stepX = target.stepX;
-        _state.stepY = target.stepY;
-        _state.stepZ = target.stepZ;
-        _state.currentX = target.posX;
-        _state.currentY = target.posY;
-        _state.currentZ = target.posZ;
+        if (xSemaphoreTake(_stateMutex, portMAX_DELAY) == pdTRUE)
+        {
+            _state.stepX = target.stepX;
+            _state.stepY = target.stepY;
+            _state.stepZ = target.stepZ;
+            _state.currentX = target.posX;
+            _state.currentY = target.posY;
+            _state.currentZ = target.posZ;
+
+            xSemaphoreGive(_stateMutex);
+        }
     }
 
     Target calculateTarget(const MotionCmd& cmd)
     {
-        Target target;
+        Target target{.stepX = _state.stepX,
+                      .stepY = _state.stepY,
+                      .stepZ = _state.stepZ,
+                      .posX = _state.currentX,
+                      .posY = _state.currentY,
+                      .posZ = _state.currentZ};
 
         if (cmd.x.has_value())
         {
@@ -141,7 +160,7 @@ template <typename T> class Planner : public CppTask
 
     void applyMotionRamp(StepCmd& stepCmd, const MotionCmd& cmd)
     {
-        if (cmd.motion == MotionType::Linear )
+        if (cmd.motion == MotionType::Linear)
         {
             stepCmd.startArr = _config.startingSpeedToArr;
             stepCmd.targetArr = _config.defaultTargetSpeedToArr;
@@ -173,7 +192,8 @@ template <typename T> class Planner : public CppTask
                 stepCmd.decelSteps = stepCmd.totalSteps - _config.rapidAcceleration.steps;
             }
         }
-        else if (cmd.motion == MotionType::MoveOnce) {
+        else if (cmd.motion == MotionType::MoveOnce)
+        {
             stepCmd.startArr = _config.startingSpeedToArr;
             stepCmd.targetArr = _config.defaultTargetSpeedToArr;
             stepCmd.accIncrease = _config.defaultAcceleration.increase;
@@ -191,10 +211,12 @@ template <typename T> class Planner : public CppTask
     }
 
     QueueHandle_t _motionQueue;
-    static constexpr uint8_t queueSize = 20;
+    static constexpr uint8_t QUEUE_SIZE = 20;
 
     const MachineConfig& _config;
 
     MachineState _state;
     MotionController<T>* _controller;
+
+    mutable SemaphoreHandle_t _stateMutex;
 };

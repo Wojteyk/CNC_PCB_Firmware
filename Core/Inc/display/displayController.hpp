@@ -6,14 +6,21 @@
 #include "hardware/xpt2046.hpp"
 #include "planner/planner.hpp"
 
-template <typename LcdDriver, typename TouchDriver, typename T> class DisplayController : public CppTask
+template <typename LcdDriver, typename TouchDriver, typename T>
+class DisplayController : public CppTask
 {
   public:
-    DisplayController(LcdDriver& screenDriver, TouchDriver& touchDriver ,Planner<T>& planner )
+    DisplayController(LcdDriver& screenDriver,
+                      TouchDriver& touchDriver,
+                      Planner<T>& planner,
+                      QueueHandle_t gcodeQueue)
         : CppTask("Gui", 4096, 5)
         , _screenDriver(screenDriver)
         , _touchDriver(touchDriver)
-        ,_planner(planner)
+        , _planner(planner)
+        , _mainMenu(gcodeQueue)
+        , _controls(gcodeQueue)
+        , _currentView(&_mainMenu)
     {
     }
 
@@ -23,10 +30,14 @@ template <typename LcdDriver, typename TouchDriver, typename T> class DisplayCon
         if (auto res = _screenDriver.init(); !res.isOk())
             ErrorHandler::report(res.error);
 
+        if (auto res = _touchDriver.init(); !res.isOk())
+            ErrorHandler::report(res.error);
+
         GuiEvent event;
         TouchState touchState = TouchState::IDLE;
         uint8_t holdCnt = 0;
         Point lastPoint = {0, 0};
+        _screenDriver.fillScreen(Colors::Background);
 
         while (1)
         {
@@ -43,7 +54,7 @@ template <typename LcdDriver, typename TouchDriver, typename T> class DisplayCon
                 _currentView->forceRedraw();
             }
 
-            if(_currentView == &_controls)
+            if (_currentView == &_controls)
             {
                 _controls.updateCurrentPos(targetState);
             }
@@ -68,7 +79,7 @@ template <typename LcdDriver, typename TouchDriver, typename T> class DisplayCon
                 case TouchState::PRESSED:
                     if (pressed)
                     {
-                        if (++holdCnt > 8) 
+                        if (++holdCnt > 8)
                         {
                             touchState = TouchState::HOLD;
                             holdCnt = 0;
@@ -83,7 +94,7 @@ template <typename LcdDriver, typename TouchDriver, typename T> class DisplayCon
                 case TouchState::HOLD:
                     if (pressed)
                     {
-                        if (++holdCnt >= 10) 
+                        if (++holdCnt >= 10)
                         {
                             _currentView->handleHold(_touchDriver.getPoint());
                             holdCnt = 0;
@@ -104,9 +115,11 @@ template <typename LcdDriver, typename TouchDriver, typename T> class DisplayCon
 
   private:
     LcdDriver& _screenDriver;
-    MainMenu _mainMenu;
-    Controls _controls;
-    View* _currentView = &_mainMenu;
     TouchDriver& _touchDriver;
     Planner<T>& _planner;
+
+    MainMenu _mainMenu;
+    Controls _controls;
+
+    View* _currentView;
 };

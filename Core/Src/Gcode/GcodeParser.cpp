@@ -9,7 +9,7 @@
 
 void GcodeParser::run()
 {
-    char lineBuffer[64];
+    char lineBuffer[BUFFER_SIZE];
     // const char* startupCmds[] = {"G0 Z4", "G0 Z8"};
     // for (const char* c : startupCmds)
     // {
@@ -19,7 +19,7 @@ void GcodeParser::run()
     // }
     while (true)
     {
-        if (xQueueReceive(_inputQueue, &lineBuffer, portMAX_DELAY) == pdPASS)
+        if (xQueueReceive(_gcodeQueue, &lineBuffer, portMAX_DELAY) == pdPASS)
         {
             std::string_view s(lineBuffer);
             auto res = parseLine(s);

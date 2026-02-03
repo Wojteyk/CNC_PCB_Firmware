@@ -1,7 +1,7 @@
 #include "main.h"
 #include "hardware/ili9341.hpp"
 #include "common/systemError.hpp"
-#include "display/displayConroller.hpp"
+#include "display/displayController.hpp"
 #include "planner/planner.hpp"
 #include "Gcode/GcodeParser.hpp"
 #include "hardware/tmc2209.hpp"
@@ -17,7 +17,6 @@ extern "C" UART_HandleTypeDef huart1;
 extern "C" TIM_HandleTypeDef htim10;
 
 size_t freeHeapNow;
-QueueHandle_t gcodeQueue = nullptr;
 QueueHandle_t guiEventQueue = nullptr;
 
 MachineConfig globalConfig;
@@ -26,7 +25,7 @@ XPT2046 touch(&hspi2, TOUCH_CS_GPIO_Port, TOUCH_CS_Pin, TOUCH_IRQ_GPIO_Port, TOU
 TMC2209 zAxis(&huart1, 0, ZAXIS_DIR_GPIO_Port, ZAXIS_DIR_Pin, ZAXIS_STEP_GPIO_Port, ZAXIS_STEP_Pin);
 MotionController<TMC2209> mController(&htim10, zAxis, zAxis, zAxis, globalConfig);
 Planner<TMC2209> planner(&mController, globalConfig);
-GcodeParser gParser(planner.getQueueHandle(), gcodeQueue);
+GcodeParser gParser(planner.getQueueHandle());
 
 ILI9341 displayDriver(&hspi1,
                       LCD_CS_GPIO_Port,
@@ -36,26 +35,21 @@ ILI9341 displayDriver(&hspi1,
                       LCD_RST_GPIO_Port,
                       LCD_RST_Pin);
 
-DisplayController<ILI9341, XPT2046, TMC2209> dispController(displayDriver, touch,planner);
+DisplayController<ILI9341, XPT2046, TMC2209> dispController(displayDriver, touch, planner, gParser.getQueueHandle());
 
 extern "C" void cpp_main()
 {
-    gcodeQueue = xQueueCreate(10,64);
     guiEventQueue = xQueueCreate(5, sizeof(GuiEvent));
-
-    gParser.setInputQueue(gcodeQueue);
 
     auto res = mController.init();
     if (!res.isOk())
     {
-        //    ErrorHandler::report(res.error);
+        ErrorHandler::report(res.error);
     }
 
     dispController.start();
-    touch.init();
     planner.start();
     gParser.start();
-    
 
     while (1)
     {

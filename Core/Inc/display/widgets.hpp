@@ -65,10 +65,11 @@ class Label : public Widget
     void setText(const char* newText)
     {
 
-        if (strcmp(_textBuffer, newText) != 0) {
+        if (strcmp(_textBuffer, newText) != 0)
+        {
             strncpy(_textBuffer, newText, sizeof(_textBuffer) - 1);
-            _textBuffer[sizeof(_textBuffer) - 1] = '\0'; 
-            _redraw = true; 
+            _textBuffer[sizeof(_textBuffer) - 1] = '\0';
+            _redraw = true;
         }
     }
 
@@ -80,7 +81,7 @@ class Label : public Widget
 class Button : public Widget
 {
   public:
-    using ClickAction = void (*)();
+    using ClickAction = void (*)(void* ctx);
 
     Button(int16_t x,
            int16_t y,
@@ -91,7 +92,8 @@ class Button : public Widget
            uint16_t color,
            ClickAction action = nullptr,
            ClickAction actionHold = nullptr,
-           ClickAction actionRelease = nullptr)
+           ClickAction actionRelease = nullptr,
+           void* context = nullptr)
         : Widget(x, y, w, h)
         , _text(text)
         , _textColor(textColor)
@@ -101,6 +103,7 @@ class Button : public Widget
         , _actionRelease(actionRelease)
         , _pressed(false)
         , _prevColor(color)
+        ,_ctx(context)
     {
     }
 
@@ -136,7 +139,7 @@ class Button : public Widget
             _color = Colors::White;
             _redraw = true;
             if (_action)
-                _action();
+                _action(_ctx);
         }
     }
 
@@ -148,7 +151,7 @@ class Button : public Widget
             _color = Colors::White;
             _redraw = true;
             if (_actionHold)
-                _actionHold();
+                _actionHold(_ctx);
         }
     }
 
@@ -159,6 +162,8 @@ class Button : public Widget
             _pressed = false;
             _color = _prevColor;
             _redraw = true;
+            if(_actionRelease)
+                _actionRelease(_ctx);
         }
     }
 
@@ -186,4 +191,5 @@ class Button : public Widget
     ClickAction _actionRelease;
     bool _pressed;
     uint16_t _prevColor;
+    void* _ctx;
 };

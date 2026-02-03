@@ -72,9 +72,20 @@ class View
 class MainMenu : public View
 {
   public:
-    MainMenu()
-        : _mainLabel(135, 20, "CNC PCB", Colors::Blue)
-        , _btnStart(100, 40, 120, 40, "START", Colors::White, Colors::Green, sendStartGcode)
+    MainMenu(QueueHandle_t gcodeQueue)
+        : _gcodeQueue(gcodeQueue)
+        , _mainLabel(135, 20, "CNC PCB", Colors::Blue)
+        , _btnStart(100,
+                    40,
+                    120,
+                    40,
+                    "START",
+                    Colors::White,
+                    Colors::Green,
+                    sendStartGcode,
+                    nullptr,
+                    nullptr,
+                    this)
         , _btnControl(100,
                       100,
                       120,
@@ -82,7 +93,7 @@ class MainMenu : public View
                       "Controls",
                       Colors::White,
                       Colors::BlueishGrey,
-                      moveToControls)
+                      moveToControls )
         , _btnSettings(100, 160, 120, 40, "SETUP", Colors::White, Colors::Blue)
     {
         addWidget(&_mainLabel);
@@ -91,22 +102,25 @@ class MainMenu : public View
         addWidget(&_btnSettings);
     }
 
-    static void moveToControls()
+    static void moveToControls(void* ctx)
     {
         GuiEvent ev = GuiEvent::ShowControls;
         xQueueSend(guiEventQueue, &ev, 0);
     }
 
-    static void sendStartGcode()
+    static void sendStartGcode(void* ctx)
     {
-        if (gcodeQueue != nullptr)
+        auto* self = static_cast<MainMenu*>(ctx);
+        if (self->_gcodeQueue != nullptr)
         {
             const char* cmd = "G1 Z1";
-            xQueueSend(gcodeQueue, cmd, 0);
+            xQueueSend(self->_gcodeQueue, cmd, 0);
         }
     }
 
   private:
+    QueueHandle_t _gcodeQueue;
+
     Label _mainLabel;
     Button _btnStart;
     Button _btnControl;
@@ -116,12 +130,13 @@ class MainMenu : public View
 class Controls : public View
 {
   public:
-    Controls()
-        : _mainLabel(135, 20, "Controls", Colors::Blue)
-        ,_posLabel(10,20 ,"Target Pos:", Colors::White)
-        ,_xLabel(20, 35, "-", Colors::BlueishGrey)
-        ,_yLabel(20, 45, "-", Colors::BlueishGrey)
-        ,_zLabel(20, 55, "-", Colors::BlueishGrey)
+    Controls(QueueHandle_t gcodeQueue)
+        : _gcodeQueue(gcodeQueue)
+        , _mainLabel(135, 20, "Controls", Colors::Blue)
+        , _posLabel(10, 20, "Target Pos:", Colors::White)
+        , _xLabel(20, 35, "-", Colors::BlueishGrey)
+        , _yLabel(20, 45, "-", Colors::BlueishGrey)
+        , _zLabel(20, 55, "-", Colors::BlueishGrey)
         , _btnUpZ(200,
                   40,
                   60,
@@ -130,7 +145,9 @@ class Controls : public View
                   Colors::White,
                   Colors::LightGrey,
                   sendGcodeZUp,
-                  keepGcodeZUp)
+                  keepGcodeZUp,
+                  nullptr,
+                  this)
         , _btnDownZ(200,
                     110,
                     60,
@@ -139,7 +156,9 @@ class Controls : public View
                     Colors::White,
                     Colors::LightGrey,
                     sendGcodeZDown,
-                    keepGcodeZDown)
+                    keepGcodeZDown,
+                    nullptr,
+                    this)
         , _btnBack(250, 180, 60, 40, "Back", Colors::White, Colors::Orange, backToMenu)
     {
         addWidget(&_mainLabel);
@@ -159,51 +178,55 @@ class Controls : public View
         _xLabel.setText(buf);
 
         snprintf(buf, sizeof(buf), "Y: %.2f", state.currentY);
-        _xLabel.setText(buf);
+        _yLabel.setText(buf);
 
         snprintf(buf, sizeof(buf), "Z: %.2f", state.currentZ);
-        _xLabel.setText(buf);
+        _zLabel.setText(buf);
     }
 
-    static void sendGcodeZUp()
+    static void sendGcodeZUp(void* ctx)
     {
-        if (gcodeQueue != nullptr)
+        auto* self = static_cast<Controls*>(ctx);
+        if (self->_gcodeQueue != nullptr)
         {
             const char* cmd = "G91 Z0.2";
-            xQueueSend(gcodeQueue, cmd, 0);
+            xQueueSend(self->_gcodeQueue, cmd, 0);
         }
     }
 
-    static void sendGcodeZDown()
+    static void sendGcodeZDown(void* ctx)
     {
-        if (gcodeQueue != nullptr)
+        auto* self = static_cast<Controls*>(ctx);
+        if (self->_gcodeQueue != nullptr)
         {
             const char* cmd = "G91 Z-0.2";
-            xQueueSend(gcodeQueue, cmd, 0);
+            xQueueSend(self->_gcodeQueue, cmd, 0);
         }
     }
 
-    static void keepGcodeZDown()
+    static void keepGcodeZDown(void* ctx)
     {
+        auto* self = static_cast<Controls*>(ctx);
         const char* cmd = "G91 Z-1";
-        xQueueSend(gcodeQueue, cmd, 0);
-
+        xQueueSend(self->_gcodeQueue, cmd, 0);
     }
 
-    static void keepGcodeZUp()
+    static void keepGcodeZUp(void* ctx)
     {
+        auto* self = static_cast<Controls*>(ctx);
         const char* cmd = "G91 Z1";
-        xQueueSend(gcodeQueue, cmd, 0);
-
+        xQueueSend(self->_gcodeQueue, cmd, 0);
     }
 
-    static void backToMenu()
+    static void backToMenu(void* ctx)
     {
         GuiEvent ev = GuiEvent::ShowMain;
         xQueueSend(guiEventQueue, &ev, 0);
     }
 
   private:
+    QueueHandle_t _gcodeQueue;
+
     Label _mainLabel;
     Label _posLabel;
     Label _xLabel;

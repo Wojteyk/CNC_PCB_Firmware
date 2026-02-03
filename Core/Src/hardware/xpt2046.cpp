@@ -14,8 +14,9 @@ XPT2046::XPT2046(SPI_HandleTypeDef* hspi,
 {
 }
 
-void XPT2046::init() {
+Result<void> XPT2046::init() {
         HAL_GPIO_WritePin(_csPort, _csPin, GPIO_PIN_SET); // CS nieaktywny
+        return Result<void>(ErrorCode::Ok);
     }
 
 uint16_t XPT2046::getRaw(uint8_t cmd)
