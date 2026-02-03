@@ -49,27 +49,31 @@ class Label : public Widget
   public:
     Label(int16_t x, int16_t y, const char* text, uint16_t color)
         : Widget(x, y, 0, 0)
-        , _text(text)
         , _color(color)
     {
+        setText(text);
     }
 
     void draw(IGuiDriver& driver) override
     {
         if (!_redraw)
             return;
-        driver.drawString(_x, _y, _text, _color, Colors::Background);
+        driver.drawString(_x, _y, _textBuffer, _color, Colors::Background);
         _redraw = false;
     }
 
     void setText(const char* newText)
     {
-        _text = newText;
-        _redraw = true;
+
+        if (strcmp(_textBuffer, newText) != 0) {
+            strncpy(_textBuffer, newText, sizeof(_textBuffer) - 1);
+            _textBuffer[sizeof(_textBuffer) - 1] = '\0'; 
+            _redraw = true; 
+        }
     }
 
   private:
-    const char* _text;
+    char _textBuffer[32];
     uint16_t _color;
 };
 

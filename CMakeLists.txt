@@ -58,12 +58,12 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 # Include paths
 # ============================================================
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    Inc
-    Inc/common
-    Inc/hardware
-    Inc/display
-    Inc/planner
-    Inc/Gcode
+    Core/Inc
+    Core/Inc/common
+    Core/Inc/hardware
+    Core/Inc/display
+    Core/Inc/planner
+    Core/Inc/Gcode
 
     Middlewares/Third_Party/FreeRTOS/Source/include
     Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2

@@ -2,7 +2,10 @@
 #include "display/iGuiDriver.hpp"
 #include "display/widgets.hpp"
 #include "FreeRTOS.h"
+#include <cstring>
+#include <cstdio>
 #include "queue.h"
+#include "common/motionTypes.hpp"
 
 extern QueueHandle_t gcodeQueue;
 
@@ -115,30 +118,51 @@ class Controls : public View
   public:
     Controls()
         : _mainLabel(135, 20, "Controls", Colors::Blue)
+        ,_posLabel(10,20 ,"Target Pos:", Colors::White)
+        ,_xLabel(20, 35, "-", Colors::BlueishGrey)
+        ,_yLabel(20, 45, "-", Colors::BlueishGrey)
+        ,_zLabel(20, 55, "-", Colors::BlueishGrey)
         , _btnUpZ(200,
                   40,
                   60,
-                  40,
+                  50,
                   "Z +",
                   Colors::White,
                   Colors::LightGrey,
                   sendGcodeZUp,
                   keepGcodeZUp)
         , _btnDownZ(200,
-                    100,
+                    110,
                     60,
-                    40,
+                    50,
                     "Z -",
                     Colors::White,
                     Colors::LightGrey,
                     sendGcodeZDown,
                     keepGcodeZDown)
-        , _btnBack(260, 180, 60, 40, "Back", Colors::White, Colors::Orange, backToMenu)
+        , _btnBack(250, 180, 60, 40, "Back", Colors::White, Colors::Orange, backToMenu)
     {
         addWidget(&_mainLabel);
+        addWidget(&_posLabel);
+        addWidget(&_xLabel);
+        addWidget(&_yLabel);
+        addWidget(&_zLabel);
         addWidget(&_btnUpZ);
         addWidget(&_btnDownZ);
         addWidget(&_btnBack);
+    }
+
+    void updateCurrentPos(const MachineState& state)
+    {
+        char buf[16];
+        snprintf(buf, sizeof(buf), "X: %.2f", state.currentX);
+        _xLabel.setText(buf);
+
+        snprintf(buf, sizeof(buf), "Y: %.2f", state.currentY);
+        _xLabel.setText(buf);
+
+        snprintf(buf, sizeof(buf), "Z: %.2f", state.currentZ);
+        _xLabel.setText(buf);
     }
 
     static void sendGcodeZUp()
@@ -161,14 +185,16 @@ class Controls : public View
 
     static void keepGcodeZDown()
     {
-        const char* cmd = "G91 Z-0.1";
+        const char* cmd = "G91 Z-1";
         xQueueSend(gcodeQueue, cmd, 0);
+
     }
 
     static void keepGcodeZUp()
     {
-        const char* cmd = "G91 Z0.1";
+        const char* cmd = "G91 Z1";
         xQueueSend(gcodeQueue, cmd, 0);
+
     }
 
     static void backToMenu()
@@ -179,6 +205,10 @@ class Controls : public View
 
   private:
     Label _mainLabel;
+    Label _posLabel;
+    Label _xLabel;
+    Label _yLabel;
+    Label _zLabel;
     Button _btnUpZ;
     Button _btnDownZ;
     Button _btnBack;

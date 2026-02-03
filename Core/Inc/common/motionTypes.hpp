@@ -1,9 +1,8 @@
 /**
- * @file montionTypes.hpp
+ * @file motionTypes.hpp
  * @brief Motion command data structures
  * @details Defines data structures for motion commands including motion types
  *          and command parameters (axes, feed rate).
- * @note File name contains typo 'montion' instead of 'motion' for historical reasons
  * @author CNC Project
  * @version 1.0
  */

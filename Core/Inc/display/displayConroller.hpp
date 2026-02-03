@@ -4,14 +4,16 @@
 #include "common/systemError.hpp"
 #include "display/view.hpp"
 #include "hardware/xpt2046.hpp"
+#include "planner/planner.hpp"
 
-template <typename LcdDriver, typename TouchDriver> class DisplayController : public CppTask
+template <typename LcdDriver, typename TouchDriver, typename T> class DisplayController : public CppTask
 {
   public:
-    DisplayController(LcdDriver& screenDriver, TouchDriver& touchDriver)
+    DisplayController(LcdDriver& screenDriver, TouchDriver& touchDriver ,Planner<T>& planner )
         : CppTask("Gui", 4096, 5)
         , _screenDriver(screenDriver)
         , _touchDriver(touchDriver)
+        ,_planner(planner)
     {
     }
 
@@ -28,6 +30,8 @@ template <typename LcdDriver, typename TouchDriver> class DisplayController : pu
 
         while (1)
         {
+            MachineState targetState = _planner.getCurrentState();
+
             if (xQueueReceive(guiEventQueue, &event, 0) == pdPASS)
             {
                 if (event == GuiEvent::ShowControls)
@@ -37,6 +41,11 @@ template <typename LcdDriver, typename TouchDriver> class DisplayController : pu
 
                 _screenDriver.fillScreen(Colors::Background);
                 _currentView->forceRedraw();
+            }
+
+            if(_currentView == &_controls)
+            {
+                _controls.updateCurrentPos(targetState);
             }
 
             if (_currentView)
@@ -74,7 +83,7 @@ template <typename LcdDriver, typename TouchDriver> class DisplayController : pu
                 case TouchState::HOLD:
                     if (pressed)
                     {
-                        if (++holdCnt >= 5) 
+                        if (++holdCnt >= 10) 
                         {
                             _currentView->handleHold(_touchDriver.getPoint());
                             holdCnt = 0;
@@ -99,4 +108,5 @@ template <typename LcdDriver, typename TouchDriver> class DisplayController : pu
     Controls _controls;
     View* _currentView = &_mainMenu;
     TouchDriver& _touchDriver;
+    Planner<T>& _planner;
 };

@@ -11,8 +11,8 @@
 
 #include <string_view>
 
-#include "Common/montionTypes.hpp"
-#include "Common/systemError.hpp"
+#include "common/motionTypes.hpp"
+#include "common/systemError.hpp"
 #include "common/cppTask.hpp"
 #include "planner/planner.hpp"
 

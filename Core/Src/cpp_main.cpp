@@ -5,7 +5,7 @@
 #include "planner/planner.hpp"
 #include "Gcode/GcodeParser.hpp"
 #include "hardware/tmc2209.hpp"
-#include "hardware/montionController.hpp"
+#include "hardware/motionController.hpp"
 #include "common/machineConfig.hpp"
 #include "hardware/xpt2046.hpp"
 #include "FreeRTOS.h"
@@ -36,7 +36,7 @@ ILI9341 displayDriver(&hspi1,
                       LCD_RST_GPIO_Port,
                       LCD_RST_Pin);
 
-DisplayController<ILI9341, XPT2046> dispController(displayDriver, touch);
+DisplayController<ILI9341, XPT2046, TMC2209> dispController(displayDriver, touch,planner);
 
 extern "C" void cpp_main()
 {

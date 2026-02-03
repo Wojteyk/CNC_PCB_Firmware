@@ -1,11 +1,11 @@
 #pragma once
 #include "common/cppTask.hpp"
 #include "FreeRTOS.h"
-#include "hardware/montionController.hpp"
+#include "hardware/motionController.hpp"
 #include "queue.h"
 #include <algorithm>
 #include <math.h>
-#include "common/montionTypes.hpp"
+#include "common/motionTypes.hpp"
 #include "common/machineConfig.hpp"
 
 template <typename T> class Planner : public CppTask
@@ -16,12 +16,17 @@ template <typename T> class Planner : public CppTask
         , _config(config)
         , _controller(controller)
     {
-        _montionQueue = xQueueCreate(queueSize, sizeof(MotionCmd));
+        _motionQueue = xQueueCreate(queueSize, sizeof(MotionCmd));
     }
 
     QueueHandle_t getQueueHandle() const
     {
-        return _montionQueue;
+        return _motionQueue;
+    }
+
+    MachineState getCurrentState()
+    {
+        return _state;
     }
 
   protected:
@@ -31,7 +36,7 @@ template <typename T> class Planner : public CppTask
 
         while (true)
         {
-            if (xQueueReceive(_montionQueue, &currentCmd, portMAX_DELAY) == pdPASS)
+            if (xQueueReceive(_motionQueue, &currentCmd, portMAX_DELAY) == pdPASS)
             {
                 StepCmd stepcmd = calculateSteps(currentCmd);
 
@@ -71,7 +76,7 @@ template <typename T> class Planner : public CppTask
 
         MotionCmd nextCmd;
         stepCmd.slowDown = true;
-        if (xQueuePeek(_montionQueue, &nextCmd, 0) == pdPASS)
+        if (xQueuePeek(_motionQueue, &nextCmd, 0) == pdPASS)
         {
 
             auto nextTarget = calculateTarget(nextCmd);
@@ -185,7 +190,7 @@ template <typename T> class Planner : public CppTask
         }
     }
 
-    QueueHandle_t _montionQueue;
+    QueueHandle_t _motionQueue;
     static constexpr uint8_t queueSize = 20;
 
     const MachineConfig& _config;

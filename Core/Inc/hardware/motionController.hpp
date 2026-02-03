@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common/cppTask.hpp"
-#include "common/montionTypes.hpp"
+#include "common/motionTypes.hpp"
 #include "common/systemError.hpp"
 #include "common/machineConfig.hpp"
 #include "main.h"
