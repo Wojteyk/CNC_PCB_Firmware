@@ -11,9 +11,8 @@ build/
 *.d
 
 
-.vscode/ipch/
-.vscode/browse.vc.db
-.vscode/cmake-kit-history.json
+.vscode/
+
 
 .DS_Store
 Thumbs.db

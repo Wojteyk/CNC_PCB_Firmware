@@ -24,7 +24,9 @@ enum struct MotionType : uint8_t
     ArcCw = 2,  ///< Clockwise arc (G2) - circular motion
     ArcCCw = 3, ///< Counter-clockwise arc (G3) - circular motion
     None = 4,    ///< No motion specified
-    MoveOnce = 91,
+    SetHome = 10,
+    Move = 91,
+    Stop = 92,
 };
 
 struct MachineState
@@ -71,14 +73,14 @@ struct StepCmd
 
     int32_t totalSteps;
 
-    uint32_t startArr;  
-    uint32_t targetArr; 
-    uint32_t accelSteps; 
-    uint32_t decelSteps; 
+    int32_t startArr;  
+    int32_t targetArr; 
+    int32_t accelSteps; 
+    int32_t decelSteps; 
 
     uint8_t dirMask;
 
-    uint16_t accIncrease;
+    int16_t accIncrease;
     bool slowDown;
 };
 

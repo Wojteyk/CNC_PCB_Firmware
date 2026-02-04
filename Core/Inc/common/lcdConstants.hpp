@@ -12,6 +12,7 @@ enum struct TouchState
     IDLE,
     PRESSED,
     HOLD,
+    RELEASED,
 };
 
 extern QueueHandle_t guiEventQueue;

@@ -87,14 +87,14 @@ class DisplayController : public CppTask
                     }
                     else
                     {
-                        touchState = TouchState::IDLE;
+                        touchState = TouchState::RELEASED;
                     }
                     break;
 
                 case TouchState::HOLD:
                     if (pressed)
                     {
-                        if (++holdCnt >= 10)
+                        if (++holdCnt >= 3)
                         {
                             _currentView->handleHold(_touchDriver.getPoint());
                             holdCnt = 0;
@@ -102,9 +102,14 @@ class DisplayController : public CppTask
                     }
                     else
                     {
-                        touchState = TouchState::IDLE;
+                        touchState = TouchState::RELEASED;
                     }
                     break;
+                case TouchState::RELEASED:
+                    _currentView->handleRelease();
+                    touchState = TouchState::IDLE;
+                    break;
+
                 }
             }
 

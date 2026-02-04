@@ -3,6 +3,7 @@
 #include <cstring>
 #include "hardware/xpt2046.hpp"
 #include "queue.h"
+#include "common/lcdConstants.hpp"
 
 class Widget
 {
@@ -58,6 +59,11 @@ class Label : public Widget
     {
         if (!_redraw)
             return;
+        driver.fillRect(_x,
+                        _y,
+                        strlen(_textBuffer) * (FONT_WIDTH + 1),
+                        FONT_HEIGHT,
+                        Colors::Background);
         driver.drawString(_x, _y, _textBuffer, _color, Colors::Background);
         _redraw = false;
     }
@@ -103,7 +109,7 @@ class Button : public Widget
         , _actionRelease(actionRelease)
         , _pressed(false)
         , _prevColor(color)
-        ,_ctx(context)
+        , _ctx(context)
     {
     }
 
@@ -112,15 +118,15 @@ class Button : public Widget
         if (!_redraw)
             return;
 
-        driver.fillRect(_x, _y, _w, _h, _color);
+        uint16_t currentColor = _pressed ? Colors::White : _color;
+        driver.fillRect(_x, _y, _w, _h, currentColor);
 
         int16_t textX = _x + (_w - (strlen(_text) * FONT_WIDTH)) / 2;
         int16_t textY = _y + (_h - FONT_HEIGHT) / 2;
 
-        driver.drawString(textX, textY, _text, _textColor, _color);
+        driver.drawString(textX, textY, _text, _textColor, currentColor);
 
         _redraw = false;
-        pressAnimation(_pressed);
     }
 
     void setParams(const char* text, uint16_t textColor, uint16_t color)
@@ -135,11 +141,13 @@ class Button : public Widget
     {
         if (isInside(p))
         {
-            _pressed = true;
-            _color = Colors::White;
-            _redraw = true;
-            if (_action)
-                _action(_ctx);
+            if (!_pressed)
+            {
+                _pressed = true;
+                _redraw = true;
+                if (_action)
+                    _action(_ctx);
+            }
         }
     }
 
@@ -162,21 +170,12 @@ class Button : public Widget
             _pressed = false;
             _color = _prevColor;
             _redraw = true;
-            if(_actionRelease)
+            if (_actionRelease)
                 _actionRelease(_ctx);
         }
     }
 
   private:
-    void pressAnimation(bool pressed)
-    {
-        if (pressed)
-        {
-            setParams(_text, _textColor, _prevColor);
-            _redraw = true;
-            _pressed = false;
-        }
-    }
 
     bool isInside(Point p)
     {

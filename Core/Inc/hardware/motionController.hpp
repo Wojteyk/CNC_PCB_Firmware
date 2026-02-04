@@ -63,8 +63,6 @@ template <typename driver> class MotionController
 
     void tick()
     {
-        // HAL_GPIO_TogglePin(STEP_X_GPIO_Port, STEP_X_Pin);
-
         if (!_isActive)
         {
             if (!tryLoadNextCommand())
@@ -151,7 +149,7 @@ template <typename driver> class MotionController
             if (!tryLoadNextCommand())
             {
                 _isActive = false;
-                __HAL_TIM_SET_AUTORELOAD(_tim, _config.startingSpeedToArr);
+                //__HAL_TIM_SET_AUTORELOAD(_tim, _config.startingSpeedToArr);
             }
         }
     }
@@ -167,6 +165,7 @@ template <typename driver> class MotionController
             _dda.accX = _dda.accY = _dda.accZ = 0;
             _dda.currentSteps = 0;
             _dda.totalSteps = nextCmd.totalSteps;
+            
 
             _axisX.setDirection((nextCmd.dirMask & 0x01) != 0);
             _axisY.setDirection((nextCmd.dirMask & 0x02) != 0);
