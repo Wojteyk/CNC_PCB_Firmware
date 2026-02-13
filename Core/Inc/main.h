@@ -73,6 +73,12 @@ void Error_Handler(void);
 #define TOUCH_IRQ_GPIO_Port GPIOB
 #define LED_Pin GPIO_PIN_2
 #define LED_GPIO_Port GPIOB
+#define MOTORS_ENABLE_Pin GPIO_PIN_12
+#define MOTORS_ENABLE_GPIO_Port GPIOA
+#define XAXIS_STEP_Pin GPIO_PIN_7
+#define XAXIS_STEP_GPIO_Port GPIOB
+#define XAXIS_DIR_Pin GPIO_PIN_8
+#define XAXIS_DIR_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 

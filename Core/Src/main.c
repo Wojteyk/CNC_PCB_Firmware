@@ -435,10 +435,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, LCD_CS_Pin|LCD_RST_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LCD_DC_GPIO_Port, LCD_DC_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LCD_DC_Pin|MOTORS_ENABLE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, TOUCH_CS_Pin|LED_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, TOUCH_CS_Pin|LED_Pin|XAXIS_STEP_Pin|XAXIS_DIR_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : ZAXIS_STEP_Pin ZAXIS_DIR_Pin */
   GPIO_InitStruct.Pin = ZAXIS_STEP_Pin|ZAXIS_DIR_Pin;
@@ -454,8 +454,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : TOUCH_CS_Pin LED_Pin */
-  GPIO_InitStruct.Pin = TOUCH_CS_Pin|LED_Pin;
+  /*Configure GPIO pins : TOUCH_CS_Pin LED_Pin XAXIS_DIR_Pin */
+  GPIO_InitStruct.Pin = TOUCH_CS_Pin|LED_Pin|XAXIS_DIR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -466,6 +466,20 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(TOUCH_IRQ_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : MOTORS_ENABLE_Pin */
+  GPIO_InitStruct.Pin = MOTORS_ENABLE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(MOTORS_ENABLE_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : XAXIS_STEP_Pin */
+  GPIO_InitStruct.Pin = XAXIS_STEP_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(XAXIS_STEP_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

@@ -5,12 +5,17 @@
             "name": "Cortex Debug",
             "type": "cortex-debug",
             "request": "launch",
-            "executable": "${workspaceFolder}/build/CNC_PCB_FIRMWARE.elf",
-            "servertype": "stlink",
+            "executable": "${workspaceFolder}/build/Debug/CNC_PCB_FIRMWARE.elf",
+            "servertype": "openocd",
             "device": "STM32F405xx",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
+            ],
             "cwd": "${workspaceFolder}",
             "runToMain": true,
-            "preLaunchTask": "build"
+            "preLaunchTask": "build",
+            "svdFile": "${workspaceFolder}/STM32F405.svd"
         }
     ]
 }

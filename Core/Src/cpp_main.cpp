@@ -23,7 +23,8 @@ MachineConfig globalConfig;
 
 XPT2046 touch(&hspi2, TOUCH_CS_GPIO_Port, TOUCH_CS_Pin, TOUCH_IRQ_GPIO_Port, TOUCH_IRQ_Pin);
 TMC2209 zAxis(&huart1, 0, ZAXIS_DIR_GPIO_Port, ZAXIS_DIR_Pin, ZAXIS_STEP_GPIO_Port, ZAXIS_STEP_Pin);
-MotionController<TMC2209> mController(&htim10, zAxis, zAxis, zAxis, globalConfig);
+TMC2209 xAxis(&huart1, 1, XAXIS_DIR_GPIO_Port, XAXIS_DIR_Pin, XAXIS_STEP_GPIO_Port, XAXIS_STEP_Pin);
+MotionController<TMC2209> mController(&htim10, xAxis, zAxis, zAxis, globalConfig);
 Planner<TMC2209> planner(&mController, globalConfig);
 GcodeParser gParser(planner.getQueueHandle());
 
@@ -41,13 +42,14 @@ extern "C" void cpp_main()
 {
     guiEventQueue = xQueueCreate(5, sizeof(GuiEvent));
 
+    dispController.start();
+
     auto res = mController.init();
     if (!res.isOk())
     {
         ErrorHandler::report(res.error);
     }
 
-    dispController.start();
     planner.start();
     gParser.start();
 

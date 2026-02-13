@@ -113,7 +113,9 @@ class MainMenu : public View
         auto* self = static_cast<MainMenu*>(ctx);
         if (self->_gcodeQueue != nullptr)
         {
-            const char* cmd = "G1 Z1";
+            const char* cmd = "G1 X1 Z1";
+            xQueueSend(self->_gcodeQueue, cmd, 0);
+            cmd = "G1 X20 Z5";
             xQueueSend(self->_gcodeQueue, cmd, 0);
         }
     }
@@ -173,7 +175,7 @@ class Controls : public View
                     Colors::White,
                     Colors::LightGrey,
                     nullptr,
-                    jogPressHandler,
+                    jogHoldHandler,
                     jogReleaseHandler,
                     &_cfgXDown)
         , _btnHomeX(20,
