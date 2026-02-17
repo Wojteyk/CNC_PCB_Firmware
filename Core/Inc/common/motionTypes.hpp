@@ -25,6 +25,7 @@ enum struct MotionType : uint8_t
     ArcCCw = 3, ///< Counter-clockwise arc (G3) - circular motion
     None = 4,    ///< No motion specified
     SetHome = 10,
+    Homing = 28,
     Move = 91,
     Stop = 92,
 };
@@ -39,6 +40,10 @@ struct MachineState
     int32_t stepX = 0;
     int32_t stepY = 0;
     int32_t stepZ = 0;
+
+    float machineStepX = 0.0f;
+    float machineStepY = 0.0f;
+    float machineStepZ = 0.0f;
 };
 
 /**
@@ -82,5 +87,6 @@ struct StepCmd
 
     int16_t accIncrease;
     bool slowDown;
+    bool homing;
 };
 

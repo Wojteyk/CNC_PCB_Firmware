@@ -4,7 +4,8 @@
 
 enum class GuiEvent : uint8_t {
     ShowMain,
-    ShowControls
+    ShowControls,
+    ShowError,
 };
 
 enum struct TouchState
@@ -16,6 +17,9 @@ enum struct TouchState
 };
 
 extern QueueHandle_t guiEventQueue;
+
+// Global variable to store current error code for display
+extern ErrorCode g_lastError;
 
 namespace Colors {
 

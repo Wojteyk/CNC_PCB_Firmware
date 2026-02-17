@@ -13,6 +13,14 @@
 
 static constexpr uint8_t HW_QUEUE_SIZE = 32;
 
+enum struct WorkingState
+{
+    Idle = 0,
+    Working = 1,
+    Homing = 2,
+    Error = 3,
+};
+
 template <typename driver> class MotionController
 {
   public:
@@ -63,15 +71,24 @@ template <typename driver> class MotionController
 
     void tick()
     {
-        if (!_isActive)
+        if (_workingState == WorkingState::Idle)
         {
             if (!tryLoadNextCommand())
                 return;
         }
+        else if (_workingState == WorkingState::Homing)
+        {
+            if(HAL_GPIO_ReadPin(XAXIS_ENDSW_GPIO_Port,XAXIS_ENDSW_Pin))
+            {
+                _dda.totalSteps = 0;
+                // _currentCmd.dZ = 0;
+                // _currentCmd.dY = 0;
+            }
+        } 
 
         if (_dda.totalSteps <= 0)
         {
-            _isActive = false;
+            _workingState = WorkingState::Idle;
             return;
         }
 
@@ -148,7 +165,7 @@ template <typename driver> class MotionController
         {
             if (!tryLoadNextCommand())
             {
-                _isActive = false;
+                _workingState = WorkingState::Idle;
                 //__HAL_TIM_SET_AUTORELOAD(_tim, _config.startingSpeedToArr);
             }
         }
@@ -166,13 +183,22 @@ template <typename driver> class MotionController
             _dda.currentSteps = 0;
             _dda.totalSteps = nextCmd.totalSteps;
             
-
-            _axisX.setDirection((nextCmd.dirMask & 0x01) != 0);
-            _axisY.setDirection((nextCmd.dirMask & 0x02) != 0);
-            _axisZ.setDirection((nextCmd.dirMask & 0x04) != 0);
+            if(nextCmd.homing)
+            {
+                _workingState = WorkingState::Homing;
+                _axisX.setDirection(0);
+                _axisY.setDirection(0);
+                _axisZ.setDirection(0);
+            }
+            else{
+                _workingState = WorkingState::Working;
+                _axisX.setDirection((nextCmd.dirMask & 0x01) != 0);
+                _axisY.setDirection((nextCmd.dirMask & 0x02) != 0);
+                _axisZ.setDirection((nextCmd.dirMask & 0x04) != 0);
+            }
 
             _currentCmd = nextCmd;
-            _isActive = true;
+            
 
             return true;
         }
@@ -180,12 +206,17 @@ template <typename driver> class MotionController
         return false;
     }
 
+    void startHoming()
+    {
+        
+    }
+
     TIM_HandleTypeDef* _tim;
     driver& _axisX;
     driver& _axisY;
     driver& _axisZ;
 
-    volatile bool _isActive = false;
+    volatile WorkingState _workingState = WorkingState::Idle;
     volatile uint32_t _currentArr;
 
     StepCmd _currentCmd;

@@ -61,7 +61,7 @@ class Label : public Widget
             return;
         driver.fillRect(_x,
                         _y,
-                        strlen(_textBuffer) * (FONT_WIDTH + 1),
+                        strlen(_textBuffer) * (FONT_WIDTH + 2),
                         FONT_HEIGHT,
                         Colors::Background);
         driver.drawString(_x, _y, _textBuffer, _color, Colors::Background);

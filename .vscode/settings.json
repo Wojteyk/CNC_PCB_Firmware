@@ -1,35 +1,9 @@
 {
-    "C_Cpp.intelliSenseEngine": "disabled",
-    "C_Cpp.errorSquiggles": "Disabled",
-    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
-    "[cpp]": { "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd" },
-    "[c]": { "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd" },
+    "C_Cpp.intelliSenseEngine": "default",
+    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/Debug/compile_commands.json",
 
     "cmake.configureArgs": [
         "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
-    ],
-    
-    "clangd.path": "clangd",
-    "clangd.onConfigChanged": "restart",
-    "clangd.checkUpdates": false,
-    
-    "clangd.arguments": [
-        "--compile-commands-dir=${workspaceFolder}/build",
-        "--background-index",
-        "--query-driver=C:/Program Files (x86)/Arm GNU Toolchain arm-none-eabi/14.2 rel1/bin/arm-none-eabi-*",
-        "--header-insertion=never",
-        "-j=4"
-    ],
-
-    "clangd.fallbackFlags": [
-        "--target=arm-none-eabi",
-        "-std=c++17",
-        "-DSTM32F405xx",
-        "-DUSE_HAL_DRIVER",
-        "-mcpu=cortex-m4",
-        "-mfloat-abi=hard",
-        "-mfpu=fpv4-sp-d16"
-        // Nie wpisuj tutaj ręcznie -I (include), 
-        // bo to powinien załatwić CMake przez compile_commands.json
     ]
 }

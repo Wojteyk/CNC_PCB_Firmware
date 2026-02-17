@@ -18,7 +18,7 @@ extern "C" TIM_HandleTypeDef htim10;
 
 size_t freeHeapNow;
 QueueHandle_t guiEventQueue = nullptr;
-
+ErrorCode g_lastError = ErrorCode::Ok;
 MachineConfig globalConfig;
 
 XPT2046 touch(&hspi2, TOUCH_CS_GPIO_Port, TOUCH_CS_Pin, TOUCH_IRQ_GPIO_Port, TOUCH_IRQ_Pin);

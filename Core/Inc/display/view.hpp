@@ -64,7 +64,7 @@ class View
     }
 
   private:
-    static constexpr uint8_t MAX_WIDGETS = 15;
+    static constexpr uint8_t MAX_WIDGETS = 16;
     Widget* _widgets[MAX_WIDGETS];
     uint8_t _widgetCnt = 0;
 };
@@ -113,9 +113,11 @@ class MainMenu : public View
         auto* self = static_cast<MainMenu*>(ctx);
         if (self->_gcodeQueue != nullptr)
         {
-            const char* cmd = "G1 X1 Z1";
+            const char* cmd = "G0 X40 Z2";
             xQueueSend(self->_gcodeQueue, cmd, 0);
-            cmd = "G1 X20 Z5";
+            cmd = "G1 Z0.5";
+            xQueueSend(self->_gcodeQueue, cmd, 0);
+            cmd = "G1 X20";
             xQueueSend(self->_gcodeQueue, cmd, 0);
         }
     }
@@ -151,11 +153,12 @@ class Controls : public View
         , _cfgZUp{nullptr, "G91 Z0.5", "G92 Z0.2", gcodeQueue}
         , _cfgZDown{nullptr, "G91 Z-0.5", "G92 Z-0.2", gcodeQueue}
         , _cfgHomeZ{"G10 Z0", nullptr, nullptr, gcodeQueue}
+        , _cfgHoming{"G28", nullptr, "G10 X0 Y0 Z0", gcodeQueue}
         , _mainLabel(135, 10, "Controls", Colors::Blue)
         , _posLabel(240, 10, "Target Pos:", Colors::White)
-        , _xLabel(253, 40, "-", Colors::White)
-        , _yLabel(253, 51, "-", Colors::White)
-        , _zLabel(253, 62, "-", Colors::White)
+        , _xLabel(250, 40, "-", Colors::White)
+        , _yLabel(250, 51, "-", Colors::White)
+        , _zLabel(250, 62, "-", Colors::White)
         , _btnUpX(15,
                   40,
                   60,
@@ -255,6 +258,17 @@ class Controls : public View
                     nullptr,
                     nullptr,
                     &_cfgHomeZ)
+        , _btnHoming(260,
+                    110,
+                    50,
+                    50,
+                    "HOME",
+                    Colors::White,
+                    Colors::Green,
+                    jogPressHandler,
+                    nullptr,
+                    jogReleaseHandler,
+                    &_cfgHoming)
         , _btnBack(250, 190, 60, 40, "Back", Colors::White, Colors::Orange, backToMenu)
     {
         addWidget(&_mainLabel);
@@ -271,6 +285,7 @@ class Controls : public View
         addWidget(&_btnUpZ);
         addWidget(&_btnDownZ);
         addWidget(&_btnHomeZ);
+        addWidget(&_btnHoming);
         addWidget(&_btnBack);
     }
 
@@ -335,6 +350,8 @@ class Controls : public View
     JogConfig _cfgZDown;
     JogConfig _cfgHomeZ;
 
+    JogConfig _cfgHoming;
+
     Label _mainLabel;
     Label _posLabel;
     Label _xLabel;
@@ -349,5 +366,41 @@ class Controls : public View
     Button _btnUpZ;
     Button _btnDownZ;
     Button _btnHomeZ;
+    Button _btnHoming;
     Button _btnBack;
+};
+
+
+class ErrorPage : public View
+{
+    public: 
+    ErrorPage()
+    :_mainLabel(135, 10, "Errors", Colors::Blue)
+    ,_errorInfo(100,30,"Cricital Error", Colors::Warning)
+    , _btnBack(250, 190, 60, 40, "Back", Colors::White, Colors::Orange, backToMenu)
+    {
+        addWidget(&_mainLabel);
+        addWidget(&_errorInfo);
+        addWidget(&_btnBack);
+    }
+
+    void setError(ErrorCode e)
+    {
+        const char* errorMsg = ErrorHandler::toMessage(e);
+        _errorInfo.setText(errorMsg);
+        forceRedraw();
+    }
+
+    static void backToMenu(void* ctx)
+    {
+        GuiEvent ev = GuiEvent::ShowMain;
+        xQueueSend(guiEventQueue, &ev, 0);
+    }
+    
+        
+    private:
+    Label _mainLabel;
+    Label _errorInfo;
+    Button _btnBack;
+
 };

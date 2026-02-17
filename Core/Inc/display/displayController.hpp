@@ -20,6 +20,7 @@ class DisplayController : public CppTask
         , _planner(planner)
         , _mainMenu(gcodeQueue)
         , _controls(gcodeQueue)
+        , _errorPage()
         , _currentView(&_mainMenu)
     {
     }
@@ -49,6 +50,11 @@ class DisplayController : public CppTask
                     _currentView = &_controls;
                 else if (event == GuiEvent::ShowMain)
                     _currentView = &_mainMenu;
+                else if (event == GuiEvent::ShowError)
+                {
+                    _errorPage.setError(g_lastError);
+                    _currentView = &_errorPage;
+                }
 
                 _screenDriver.fillScreen(Colors::Background);
                 _currentView->forceRedraw();
@@ -125,6 +131,7 @@ class DisplayController : public CppTask
 
     MainMenu _mainMenu;
     Controls _controls;
+    ErrorPage _errorPage;
 
     View* _currentView;
 };

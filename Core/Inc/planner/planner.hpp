@@ -68,7 +68,7 @@ template <typename T> class Planner : public CppTask
         if (xSemaphoreTake(_stateMutex, portMAX_DELAY) == pdTRUE)
         {
 
-            if (cmd.motion == MotionType::SetHome)
+            if (cmd.motion == MotionType::SetHome )
             {
                 setHome(cmd);
                 xSemaphoreGive(_stateMutex);
@@ -76,6 +76,22 @@ template <typename T> class Planner : public CppTask
             }
 
             auto target = calculateTarget(cmd);
+
+
+            if (cmd.motion == MotionType::Homing) 
+            {
+                _state.machineStepX = 0;
+                _state.machineStepY = 0;
+                _state.machineStepZ = 0;
+            }
+            else
+            {
+                if(!checkSoftLimits(target)){
+                    ErrorHandler::report(ErrorCode::Machine_SoftLimitReached);
+                    xSemaphoreGive(_stateMutex);
+                    return stepCmd; 
+                }
+            }
 
             stepCmd.dX = std::abs(target.stepX - _state.stepX);
             stepCmd.dY = std::abs(target.stepY - _state.stepY);
@@ -92,6 +108,7 @@ template <typename T> class Planner : public CppTask
                 stepCmd.dirMask |= 4; // bit for z
 
             updateState(target);
+
 
             MotionCmd nextCmd;
             stepCmd.slowDown = true;
@@ -113,6 +130,15 @@ template <typename T> class Planner : public CppTask
                 }
             }
 
+            if(cmd.motion == MotionType::Homing)
+            {
+                stepCmd.homing = true;
+                stepCmd.totalSteps = 320000;
+                stepCmd.dX = 320000;
+                stepCmd.dY = 320000;
+                stepCmd.dZ = 320000;                
+            }
+
             applyMotionRamp(stepCmd, cmd);
 
             xSemaphoreGive(_stateMutex);
@@ -124,7 +150,30 @@ template <typename T> class Planner : public CppTask
         return stepCmd;
     }
 
-    void updateState(Target target)
+    bool checkSoftLimits(const Target& target){
+    int32_t diffX = target.stepX - _state.stepX;
+    int32_t diffY = target.stepY - _state.stepY;
+    int32_t diffZ = target.stepZ - _state.stepZ;
+
+    int32_t potentialMachineStepX = _state.machineStepX + diffX;
+    int32_t potentialMachineStepY = _state.machineStepY + diffY;
+    int32_t potentialMachineStepZ = _state.machineStepZ + diffZ;
+
+    if (potentialMachineStepX < 0 || potentialMachineStepX > _config.xStepMax ||
+        potentialMachineStepY < 0 || potentialMachineStepY > _config.yStepMax ||
+        potentialMachineStepZ < 0 || potentialMachineStepZ > _config.zStepMax) 
+    {
+        return false;
+    }
+
+    _state.machineStepX = potentialMachineStepX;
+    _state.machineStepY = potentialMachineStepY;
+    _state.machineStepZ = potentialMachineStepZ;
+
+    return true;
+    }
+
+    void updateState(const Target& target)
     {
         _state.stepX = target.stepX;
         _state.stepY = target.stepY;
@@ -210,10 +259,10 @@ template <typename T> class Planner : public CppTask
                 stepCmd.decelSteps = stepCmd.totalSteps - _config.rapidAcceleration.steps;
             }
         }
-        else if (cmd.motion == MotionType::Move)
+        else if (cmd.motion == MotionType::Move || cmd.motion == MotionType::Homing)
         {
             stepCmd.startArr = _config.startingSpeedToArr;
-            stepCmd.targetArr = 200;
+            stepCmd.targetArr = _config.slowTargetSpeedToArr;
             stepCmd.accIncrease = _config.defaultAcceleration.increase;
             if (stepCmd.totalSteps <= _config.defaultAcceleration.steps * 2)
             {

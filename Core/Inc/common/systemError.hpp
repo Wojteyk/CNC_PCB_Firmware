@@ -157,6 +157,8 @@ class ErrorHandler
      */
     static void report(ErrorCode e);
 
+    static const char* toMessage(ErrorCode e);
+
   private:
     /**
      * @brief Halts the system in a safe state.

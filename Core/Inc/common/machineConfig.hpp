@@ -67,9 +67,14 @@ struct MachineConfig
     float stepsPerMM_XY = 1600.0f; ///< Steps per millimeter for X, Y axis
     float stepsPerMM_Z = 1600.0f;  ///< Steps per millimeter for Z axis
 
+    uint32_t xStepMax = 120*stepsPerMM_XY;
+    uint32_t yStepMax = 120*stepsPerMM_XY;
+    uint32_t zStepMax = 35*stepsPerMM_Z;
+
     uint32_t startingSpeedToArr = 2500;     //  400hz
     uint32_t defaultTargetSpeedToArr = 100; //  10khz
     uint32_t rapidTargetSpeedToArr = 70;    // ~14khz
+    uint32_t slowTargetSpeedToArr = 200;
 
     struct Acceleration
     {
