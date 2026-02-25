@@ -36,10 +36,10 @@ class GcodeParser : public CppTask
 {
   public:
     GcodeParser(QueueHandle_t targetQueue)
-        : CppTask("Gcode", 512, 2)
+        : CppTask("Gcode", 1024, 2)
         , _targetQueue(targetQueue)
     {
-      _gcodeQueue = xQueueCreate(10, BUFFER_SIZE);
+      _gcodeQueue = xQueueCreate(GCODE_QUEUE_SIZE, BUFFER_SIZE);
     }
 
     QueueHandle_t getQueueHandle() const
@@ -107,5 +107,6 @@ class GcodeParser : public CppTask
     QueueHandle_t _gcodeQueue;
 
     static constexpr uint8_t BUFFER_SIZE = 64;
-    static constexpr uint8_t QUEUE_SIZE = 20;
+    static constexpr uint8_t QUEUE_SIZE = 65;
+    static constexpr uint8_t GCODE_QUEUE_SIZE = 60;
 };

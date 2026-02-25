@@ -113,12 +113,73 @@ class MainMenu : public View
         auto* self = static_cast<MainMenu*>(ctx);
         if (self->_gcodeQueue != nullptr)
         {
-            const char* cmd = "G0 X40 Z2";
-            xQueueSend(self->_gcodeQueue, cmd, 0);
-            cmd = "G1 Z0.5";
-            xQueueSend(self->_gcodeQueue, cmd, 0);
-            cmd = "G1 X20";
-            xQueueSend(self->_gcodeQueue, cmd, 0);
+            const char* cmd;
+
+        // --- LITERA W ---
+        cmd = "G0 X0 Y0 Z2"; xQueueSend(self->_gcodeQueue, cmd, portMAX_DELAY); // Start dół lewo
+        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, portMAX_DELAY);
+        cmd = "G1 X1 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X2 Y2"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X3 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X4 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
+
+        // --- LITERA O ---
+        cmd = "G0 X5.5 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X6 Y0.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X7.5 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X9 Y0.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X9.5 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X9 Y4.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X7.5 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X6 Y4.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X5.5 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
+
+        // --- LITERA J ---
+        cmd = "G0 X11 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X14 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0); // Daszek J na dole (jeśli odwrócone Y)
+        cmd = "G0 X12.5 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X12.5 Y4"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X11.5 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X10.5 Y4"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
+
+        // --- LITERA T ---
+        cmd = "G0 X15 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X18 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0); // Belka T
+        cmd = "G0 X16.5 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X16.5 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
+
+        // --- LITERA E ---
+        cmd = "G0 X22 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X19 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X19 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X22 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G0 X19 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X21 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
+
+        // --- LITERA K ---
+        cmd = "G0 X23 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X23 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G0 X23 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X26 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G0 X23 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X26 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
         }
     }
 

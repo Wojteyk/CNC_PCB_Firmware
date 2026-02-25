@@ -78,11 +78,18 @@ template <typename driver> class MotionController
         }
         else if (_workingState == WorkingState::Homing)
         {
+            _currentCmd.dZ = 0;
             if(HAL_GPIO_ReadPin(XAXIS_ENDSW_GPIO_Port,XAXIS_ENDSW_Pin))
             {
+                 _currentCmd.dX = 0;
+            }
+            if(HAL_GPIO_ReadPin(ZAXIS_ENDSW_GPIO_Port,ZAXIS_ENDSW_Pin))
+            {
+                _currentCmd.dY = 0;
+            }
+            if(_currentCmd.dX ==0 && _currentCmd.dY == 0)
+            {
                 _dda.totalSteps = 0;
-                // _currentCmd.dZ = 0;
-                // _currentCmd.dY = 0;
             }
         } 
 
