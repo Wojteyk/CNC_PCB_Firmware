@@ -72,8 +72,8 @@ struct MachineConfig
     uint32_t zStepMax = 35*stepsPerMM_Z;
 
     uint32_t startingSpeedToArr = 2500;     //  400hz
-    uint32_t defaultTargetSpeedToArr = 100; //  10khz
-    uint32_t rapidTargetSpeedToArr = 70;    // ~14khz
+    uint32_t defaultTargetSpeedToArr = 80; //  10khz
+    uint32_t rapidTargetSpeedToArr = 60;    // ~14khz
     uint32_t slowTargetSpeedToArr = 200;
 
     struct Acceleration

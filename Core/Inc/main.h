@@ -67,6 +67,8 @@ void Error_Handler(void);
 #define LCD_DC_GPIO_Port GPIOA
 #define LCD_RST_Pin GPIO_PIN_3
 #define LCD_RST_GPIO_Port GPIOA
+#define ZAXIS_ENDSW_Pin GPIO_PIN_5
+#define ZAXIS_ENDSW_GPIO_Port GPIOC
 #define TOUCH_CS_Pin GPIO_PIN_0
 #define TOUCH_CS_GPIO_Port GPIOB
 #define TOUCH_IRQ_Pin GPIO_PIN_1
@@ -77,8 +79,8 @@ void Error_Handler(void);
 #define YAXIS_STEP_GPIO_Port GPIOB
 #define YAXIS_DIR_Pin GPIO_PIN_13
 #define YAXIS_DIR_GPIO_Port GPIOB
-#define ZAXIS_ENDSW_Pin GPIO_PIN_14
-#define ZAXIS_ENDSW_GPIO_Port GPIOB
+#define YAXIS_ENDSW_Pin GPIO_PIN_14
+#define YAXIS_ENDSW_GPIO_Port GPIOB
 #define XAXIS_ENDSW_Pin GPIO_PIN_15
 #define XAXIS_ENDSW_GPIO_Port GPIOB
 #define MOTORS_ENABLE_Pin GPIO_PIN_12

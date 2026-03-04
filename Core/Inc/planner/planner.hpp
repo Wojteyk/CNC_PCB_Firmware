@@ -82,7 +82,7 @@ template <typename T> class Planner : public CppTask
             {
                 _state.machineStepX = 0;
                 _state.machineStepY = 0;
-                _state.machineStepZ = 0;
+                _state.machineStepZ = 19800;
             }
             else
             {

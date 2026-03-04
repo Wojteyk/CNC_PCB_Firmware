@@ -115,71 +115,43 @@ class MainMenu : public View
         {
             const char* cmd;
 
-        // --- LITERA W ---
-        cmd = "G0 X0 Y0 Z2"; xQueueSend(self->_gcodeQueue, cmd, portMAX_DELAY); // Start dół lewo
-        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, portMAX_DELAY);
-        cmd = "G1 X1 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X2 Y2"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X3 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X4 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
+            cmd = "G0 X2.50 Y0.00 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0); // Najazd na start (prawy brzeg)
+            cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);             // Opuszczenie narzędzia
 
-        // --- LITERA O ---
-        cmd = "G0 X5.5 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X6 Y0.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X7.5 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X9 Y0.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X9.5 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X9 Y4.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X7.5 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X6 Y4.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X5.5 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
+            // cmd = cmd = "G1 X20 Y10"; xQueueSend(self->_gcodeQueue, cmd, 0);
+            // cmd = cmd = "G1 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+            // cmd = cmd = "G1 X40 Y10"; xQueueSend(self->_gcodeQueue, cmd, 0);
+            // cmd = cmd = "G1 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+            // cmd = cmd = "G1 X60 Y10"; xQueueSend(self->_gcodeQueue, cmd, 0);
+            // cmd = cmd = "G1 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        // Rysowanie 24 segmentów
+        cmd = "G1 X2.41 Y0.65"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X2.17 Y1.25"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X1.77 Y1.77"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X1.25 Y2.17"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X0.65 Y2.41"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X0.00 Y2.50"; xQueueSend(self->_gcodeQueue, cmd, 0); // Górny punkt
+        cmd = "G1 X-0.65 Y2.41"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X-1.25 Y2.17"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X-1.77 Y1.77"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X-2.17 Y1.25"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X-2.41 Y0.65"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X-2.50 Y0.00"; xQueueSend(self->_gcodeQueue, cmd, 0); // Lewy punkt
+        cmd = "G1 X-2.41 Y-0.65"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X-2.17 Y-1.25"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X-1.77 Y-1.77"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X-1.25 Y-2.17"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X-0.65 Y-2.41"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X0.00 Y-2.50"; xQueueSend(self->_gcodeQueue, cmd, 0); // Dolny punkt
+        cmd = "G1 X0.65 Y-2.41"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X1.25 Y-2.17"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X1.77 Y-1.77"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X2.17 Y-1.25"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X2.41 Y-0.65"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G1 X2.50 Y0.00"; xQueueSend(self->_gcodeQueue, cmd, 0);  // Zamknięcie okręgu
 
-        // --- LITERA J ---
-        cmd = "G0 X11 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X14 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0); // Daszek J na dole (jeśli odwrócone Y)
-        cmd = "G0 X12.5 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X12.5 Y4"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X11.5 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X10.5 Y4"; xQueueSend(self->_gcodeQueue, cmd, 0);
         cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
-
-        // --- LITERA T ---
-        cmd = "G0 X15 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X18 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0); // Belka T
-        cmd = "G0 X16.5 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X16.5 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
-
-        // --- LITERA E ---
-        cmd = "G0 X22 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X19 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X19 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X22 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G0 X19 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X21 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
-
-        // --- LITERA K ---
-        cmd = "G0 X23 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X23 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G0 X23 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X26 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G0 X23 Y2.5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X26 Y5"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
+        cmd = "G0 X0 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
         }
     }
 
@@ -212,7 +184,7 @@ class Controls : public View
         , _cfgYDown{nullptr,"G91 Y-0.5","G92 Y-0.2", gcodeQueue}
         , _cfgHomeY{"G10 Y0",nullptr, nullptr, gcodeQueue}
         , _cfgZUp{nullptr, "G91 Z0.5", "G92 Z0.2", gcodeQueue}
-        , _cfgZDown{nullptr, "G91 Z-0.5", "G92 Z-0.2", gcodeQueue}
+        , _cfgZDown{nullptr, "G91 Z-0.5", "G92 Z-0.1", gcodeQueue}
         , _cfgHomeZ{"G10 Z0", nullptr, nullptr, gcodeQueue}
         , _cfgHoming{"G28", nullptr, "G10 X0 Y0 Z0", gcodeQueue}
         , _mainLabel(135, 10, "Controls", Colors::Blue)

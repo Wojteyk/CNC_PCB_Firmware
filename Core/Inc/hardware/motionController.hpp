@@ -83,13 +83,19 @@ template <typename driver> class MotionController
             {
                  _currentCmd.dX = 0;
             }
-            if(HAL_GPIO_ReadPin(ZAXIS_ENDSW_GPIO_Port,ZAXIS_ENDSW_Pin))
+            if(HAL_GPIO_ReadPin(YAXIS_ENDSW_GPIO_Port,YAXIS_ENDSW_Pin))
             {
                 _currentCmd.dY = 0;
             }
             if(_currentCmd.dX ==0 && _currentCmd.dY == 0)
             {
-                _dda.totalSteps = 0;
+                _currentCmd.dZ = _dda.totalSteps;
+                if(!HAL_GPIO_ReadPin(ZAXIS_ENDSW_GPIO_Port, ZAXIS_ENDSW_Pin))
+                {
+                    _dda.totalSteps = 0; 
+                    _dda.currentSteps = 0;
+                }
+                
             }
         } 
 
