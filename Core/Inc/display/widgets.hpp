@@ -5,9 +5,22 @@
 #include "queue.h"
 #include "common/lcdConstants.hpp"
 
+/**
+ * @file widgets.hpp
+ * @brief Basic GUI widget primitives: Widget, Label and Button.
+ */
+
+/** @brief Base GUI widget. */
 class Widget
 {
   public:
+        /**
+         * @brief Construct base widget.
+         * @param x Left coordinate.
+         * @param y Top coordinate.
+         * @param w Width.
+         * @param h Height.
+         */
     Widget(int16_t x, int16_t y, int16_t w, int16_t h)
         : _x(x)
         , _y(y)
@@ -19,19 +32,24 @@ class Widget
 
     virtual ~Widget() = default;
 
+    /** @brief Draw widget when redraw flag is set. */
     virtual void draw(IGuiDriver& driver) = 0;
 
+    /** @brief Process touch-press event. */
     virtual void checkTouch(Point p)
     {
     }
+    /** @brief Process touch-hold event. */
     virtual void checkHold(Point p)
     {
     }
 
+    /** @brief Process touch-release event. */
     virtual void release()
     {
     }
 
+    /** @brief Mark widget for redraw. */
     void forceRedraw()
     {
         _redraw = true;
@@ -48,6 +66,7 @@ class Widget
 class Label : public Widget
 {
   public:
+    /** @brief Construct text label. */
     Label(int16_t x, int16_t y, const char* text, uint16_t color)
         : Widget(x, y, 0, 0)
         , _color(color)
@@ -55,6 +74,7 @@ class Label : public Widget
         setText(text);
     }
 
+    /** @brief Draw text label. */
     void draw(IGuiDriver& driver) override
     {
         if (!_redraw)
@@ -68,6 +88,7 @@ class Label : public Widget
         _redraw = false;
     }
 
+    /** @brief Update label text. */
     void setText(const char* newText)
     {
 
@@ -87,8 +108,10 @@ class Label : public Widget
 class Button : public Widget
 {
   public:
+        /** @brief Callback signature for button events. */
     using ClickAction = void (*)(void* ctx);
 
+    /** @brief Construct button with optional callbacks. */
     Button(int16_t x,
            int16_t y,
            int16_t w,
@@ -113,6 +136,7 @@ class Button : public Widget
     {
     }
 
+    /** @brief Draw button and its caption. */
     void draw(IGuiDriver& driver) override
     {
         if (!_redraw)
@@ -129,6 +153,7 @@ class Button : public Widget
         _redraw = false;
     }
 
+    /** @brief Update button text and colors. */
     void setParams(const char* text, uint16_t textColor, uint16_t color)
     {
         _text = text;
@@ -137,6 +162,7 @@ class Button : public Widget
         _redraw = true;
     }
 
+    /** @brief Trigger press callback when touch enters button bounds. */
     void checkTouch(Point p) override
     {
         if (isInside(p))
@@ -151,6 +177,7 @@ class Button : public Widget
         }
     }
 
+    /** @brief Trigger hold callback while touch remains pressed. */
     void checkHold(Point p) override
     {
         if (isInside(p))
@@ -163,6 +190,7 @@ class Button : public Widget
         }
     }
 
+    /** @brief Restore released state and trigger release callback. */
     void release() override
     {
         if (_pressed)
@@ -176,7 +204,7 @@ class Button : public Widget
     }
 
   private:
-
+    /** @brief Check if point is inside button bounds. */
     bool isInside(Point p)
     {
         return (p.x >= _x && p.x <= (_x + _w) && p.y >= _y && p.y <= (_y + _h));

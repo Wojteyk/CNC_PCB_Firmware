@@ -1,10 +1,6 @@
-/**
- * @file systemError.hpp
- * @brief Error codes and result wrapper template
- * @details Defines all error codes used throughout the system and provides
- *          a generic Result template for returning values with error status.
- * @author CNC Project
- * @version 1.0
+/** @file systemError.hpp
+ *  @brief Error codes and result helpers.
+ *  @details Shared error model for parser, planner, drivers and GUI.
  */
 
 #pragma once
@@ -12,38 +8,22 @@
 #include "main.h"
 #include <stdint.h>
 
-/**
- * @enum ErrorCode
- * @brief System-wide error codes
- * @details Enumeration of all possible errors that can occur in the system,
- *          categorized into parser errors, machine errors, and system errors.
- */
+/** @brief System error codes. */
 enum class ErrorCode : uint8_t
 {
-    Ok = 0, ///< Operation successful
+    Ok = 0, ///< Success.
 
-    /// @defgroup ParserErrors Parser Error Codes
-    /// Errors related to G-code parsing
-    /// @{
-    Parser_InvalidFormat,   ///< G-code line has invalid format
-    Parser_UnknownCommand,  ///< Unknown G-code command detected
-    Parser_ValueOutOfRange, ///< Parsed value is out of acceptable range
-    Parser_LineEmpty,       ///< Input line is empty or too short
-    /// @}
+    Parser_InvalidFormat,   ///< Invalid G-code format.
+    Parser_UnknownCommand,  ///< Unknown G-code command.
+    Parser_ValueOutOfRange, ///< Parsed value out of range.
+    Parser_LineEmpty,       ///< Empty input line.
 
-    /// @defgroup MachineErrors Machine Error Codes
-    /// Errors related to physical machine state
-    /// @{
-    Machine_HardLimitReached, ///< Hard limit switch activated
-    Machine_SoftLimitReached, ///< Software limit boundary exceeded
-    Machine_StepperFault,     ///< Stepper motor malfunction detected
-    /// @}
+    Machine_HardLimitReached, ///< Hard limit reached.
+    Machine_SoftLimitReached, ///< Soft limit reached.
+    Machine_StepperFault,     ///< Stepper fault.
 
-    /// @defgroup SystemErrors System Error Codes
-    /// Errors related to system operation
-    /// @{
-    System_QueueFull,  ///< Command queue is full
-    System_QueueEmpty, ///< Attempt to read from empty queue
+    System_QueueFull,  ///< Queue full.
+    System_QueueEmpty, ///< Queue empty.
 
     Task_InvalidParams,
     Task_AlreadyRunning,
@@ -60,37 +40,20 @@ enum class ErrorCode : uint8_t
     LCD_TransmissionFailed,
     LCD_OutOfRange,
 
-    /// @}
 };
 
-/**
- * @template Result
- * @brief Generic result wrapper for value + error status
- * @tparam T Type of the value being returned
- * @details Template structure that combines a returned value with an error code.
- *          This allows functions to return both a result and error information.
- * @example
- * @code
- * Result<CNC::MotionCmd> parseResult = parser.parseLine("G1 X10 Y20");
- * if (parseResult.isOk()) {
- *     // Use parseResult.value
- * } else {
- *     // Handle error: parseResult.error
- * }
- * @endcode
- */
+/** @brief Value/error result wrapper. */
 template <typename T> struct Result
 {
-    /// The returned value (default-constructed if an error occurred)
+    /// Returned value.
     T value;
 
-    /// Error code indicating operation status
+    /// Operation status.
     ErrorCode error;
 
     /**
-     * @brief Constructor for successful result
-     * @param v The value to return
-     * @post error is set to ErrorCode::Ok
+     * @brief Construct successful result.
+     * @param v Returned value.
      */
     Result(T v)
         : value(v)
@@ -99,9 +62,8 @@ template <typename T> struct Result
     }
 
     /**
-     * @brief Constructor for error result
-     * @param e The error code
-     * @post value is default-constructed
+     * @brief Construct failed result.
+     * @param e Error code.
      */
     Result(ErrorCode e)
         : value(T{})
@@ -109,10 +71,7 @@ template <typename T> struct Result
     {
     }
 
-    /**
-     * @brief Check if operation was successful
-     * @return true if error is ErrorCode::Ok, false otherwise
-     */
+    /** @brief Check for success. */
     bool isOk() const
     {
         return error == ErrorCode::Ok;
@@ -123,53 +82,42 @@ template <> struct Result<void>
 {
     ErrorCode error;
 
-    // Konstruktor dla sukcesu
+    /** @brief Construct successful void result. */
     Result()
         : error(ErrorCode::Ok)
     {
     }
 
-    // Konstruktor dla konkretnego błędu
+    /**
+     * @brief Construct failed void result.
+     * @param e Error code.
+     */
     Result(ErrorCode e)
         : error(e)
     {
     }
 
-    // Metoda pomocnicza
+    /** @brief Check for success. */
     bool isOk() const
     {
         return error == ErrorCode::Ok;
     }
 };
 
-/**
- * @class ErrorHandler
- * @brief Static utility class for managing and responding to system errors.
- * @details Provides logic to distinguish between minor operational warnings
- * and critical hardware failures that require a system halt.
- */
+/** @brief Handles system error reporting. */
 class ErrorHandler
 {
   public:
-    /**
-     * @brief Global entry point for error handling.
-     * @param e ErrorCode to process.
-     */
+    /** @brief Handle an error code. */
     static void report(ErrorCode e);
 
+    /** @brief Convert error code to readable text. */
     static const char* toMessage(ErrorCode e);
 
   private:
-    /**
-     * @brief Halts the system in a safe state.
-     * @param e The fatal ErrorCode.
-     */
+    /** @brief Enter panic mode for fatal errors. */
     static void panicMode(ErrorCode e);
 
-    /**
-     * @brief Logic to categorize errors as critical or non-critical.
-     * @param e ErrorCode to evaluate.
-     * @return true if system must stop.
-     */
+    /** @brief Check if an error is critical. */
     static bool isCritical(ErrorCode e);
 };

@@ -9,9 +9,22 @@
 #include "common/motionTypes.hpp"
 #include "common/machineConfig.hpp"
 
+/**
+ * @file planner.hpp
+ * @brief Motion planner converting MotionCmd queue entries into StepCmd segments.
+ */
+
+/**
+ * @brief Planner task converting MotionCmd to StepCmd.
+ */
 template <typename T> class Planner : public CppTask
 {
   public:
+        /**
+         * @brief Construct planner.
+         * @param controller Motion controller receiving generated StepCmd entries.
+         * @param config Machine configuration with limits and acceleration data.
+         */
     Planner(MotionController<T>* controller, const MachineConfig& config)
         : CppTask("Planner", 1024, 2)
         , _config(config)
@@ -22,11 +35,13 @@ template <typename T> class Planner : public CppTask
         _stateMutex = xSemaphoreCreateMutex();
     }
 
+    /** @brief Return queue handle for motion input commands. */
     QueueHandle_t getQueueHandle() const
     {
         return _motionQueue;
     }
 
+    /** @brief Return a thread-safe snapshot of current machine state. */
     MachineState getCurrentState()
     {
         MachineState tempState;
@@ -39,6 +54,7 @@ template <typename T> class Planner : public CppTask
     }
 
   protected:
+        /** @brief Main planner task loop. */
     void run() override
     {
         MotionCmd currentCmd;
@@ -55,12 +71,14 @@ template <typename T> class Planner : public CppTask
     }
 
   private:
+        /** @brief Target state in both position and step domain. */
     struct Target
     {
         int32_t stepX, stepY, stepZ;
         float posX, posY, posZ;
     };
 
+    /** @brief Convert motion command to step command. */
     StepCmd calculateSteps(const MotionCmd& cmd)
     {
         StepCmd stepCmd = {};
@@ -101,11 +119,11 @@ template <typename T> class Planner : public CppTask
 
             stepCmd.dirMask = 0;
             if (target.stepX >= _state.stepX)
-                stepCmd.dirMask |= 1; // bit for x
+                stepCmd.dirMask |= 1;
             if (target.stepY >= _state.stepY)
-                stepCmd.dirMask |= 2; // bit for y
+                stepCmd.dirMask |= 2;
             if (target.stepZ >= _state.stepZ)
-                stepCmd.dirMask |= 4; // bit for z
+                stepCmd.dirMask |= 4;
 
             updateState(target);
 
@@ -150,6 +168,7 @@ template <typename T> class Planner : public CppTask
         return stepCmd;
     }
 
+    /** @brief Validate software limits and update machine-step state. */
     bool checkSoftLimits(const Target& target){
     int32_t diffX = target.stepX - _state.stepX;
     int32_t diffY = target.stepY - _state.stepY;
@@ -173,6 +192,7 @@ template <typename T> class Planner : public CppTask
     return true;
     }
 
+    /** @brief Commit target to current planner state. */
     void updateState(const Target& target)
     {
         _state.stepX = target.stepX;
@@ -183,6 +203,7 @@ template <typename T> class Planner : public CppTask
         _state.currentZ = target.posZ;
     }
 
+    /** @brief Set current position as logical home. */
     void setHome(const MotionCmd& cmd)
     {
         _state.currentX = cmd.x.value_or(_state.currentX);
@@ -193,6 +214,7 @@ template <typename T> class Planner : public CppTask
         _state.stepZ = static_cast<int32_t>(_state.currentZ * _config.stepsPerMM_Z);
     }
 
+    /** @brief Build target from absolute/relative motion command. */
     Target calculateTarget(const MotionCmd& cmd)
     {
         Target target{.stepX = _state.stepX,
@@ -225,6 +247,7 @@ template <typename T> class Planner : public CppTask
         return target;
     }
 
+    /** @brief Apply acceleration profile for selected motion type. */
     void applyMotionRamp(StepCmd& stepCmd, const MotionCmd& cmd)
     {
         if (cmd.motion == MotionType::Linear)

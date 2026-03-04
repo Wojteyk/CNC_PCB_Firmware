@@ -1,10 +1,6 @@
-/**
- * @file motionTypes.hpp
- * @brief Motion command data structures
- * @details Defines data structures for motion commands including motion types
- *          and command parameters (axes, feed rate).
- * @author CNC Project
- * @version 1.0
+/** @file motionTypes.hpp
+ *  @brief Motion command types.
+ *  @details Shared motion data exchanged between parser, planner and controller.
  */
 
 #pragma once
@@ -12,70 +8,79 @@
 #include <cstdint>
 #include <optional>
 
-/**
- * @enum MotionType
- * @brief Types of motion commands
- * @details Enumeration of supported G-code motion types
- */
+/** @brief Supported motion commands. */
 enum struct MotionType : uint8_t
 {
-    Rapid = 0,  ///< Rapid positioning (G0) - fastest movement
-    Linear = 1, ///< Linear interpolation (G1) - controlled speed
-    ArcCw = 2,  ///< Clockwise arc (G2) - circular motion
-    ArcCCw = 3, ///< Counter-clockwise arc (G3) - circular motion
-    None = 4,    ///< No motion specified
+    Rapid = 0,  ///< Rapid move (G0).
+    Linear = 1, ///< Linear move (G1).
+    ArcCw = 2,  ///< Clockwise arc (G2).
+    ArcCCw = 3, ///< Counter-clockwise arc (G3).
+    None = 4,   ///< No motion.
     SetHome = 10,
     Homing = 28,
     Move = 91,
     Stop = 92,
 };
 
+/**
+ * @brief Runtime machine position in units and steps.
+ */
 struct MachineState
 {
-
+    /// Current logical X position.
     float currentX = 0.0f;
+    /// Current logical Y position.
     float currentY = 0.0f;
+    /// Current logical Z position.
     float currentZ = 0.0f;
 
+    /// Current X position in steps.
     int32_t stepX = 0;
+    /// Current Y position in steps.
     int32_t stepY = 0;
+    /// Current Z position in steps.
     int32_t stepZ = 0;
 
+    /// Machine-referenced X step position (used by soft limits/homing).
     float machineStepX = 0.0f;
+    /// Machine-referenced Y step position (used by soft limits/homing).
     float machineStepY = 0.0f;
+    /// Machine-referenced Z step position (used by soft limits/homing).
     float machineStepZ = 0.0f;
 };
 
-/**
- * @struct MotionCmd
- * @brief Motion command with axes and feed rate
- * @details Represents a single G-code motion command with optional
- *          X, Y, Z coordinates and feed rate.
- */
+/** @brief Parsed motion command. */
 struct MotionCmd
 {
-    /// Type of motion to perform
+    /// Motion type.
     MotionType motion = MotionType::None;
 
-    /// Optional X-axis coordinate (units: depends on MachineConfig::defaultUnits)
+    /// Optional X value.
     std::optional<float> x = std::nullopt;
 
-    /// Optional Y-axis coordinate
+    /// Optional Y value.
     std::optional<float> y = std::nullopt;
 
-    /// Optional Z-axis coordinate
+    /// Optional Z value.
     std::optional<float> z = std::nullopt;
 
-    /// Optional feed rate (movement speed in units/minute)
+    /// Optional feed rate.
     std::optional<float> f = std::nullopt;
 };
 
+/**
+ * @brief Discrete stepper command used by low-level motion controller.
+ */
 struct StepCmd
 {
+    /// Absolute step delta for X.
     int32_t dX;
+    /// Absolute step delta for Y.
     int32_t dY;
+    /// Absolute step delta for Z.
     int32_t dZ;
 
+    /// Total DDA step count for this segment.
     int32_t totalSteps;
 
     int32_t startArr;  
@@ -83,10 +88,14 @@ struct StepCmd
     int32_t accelSteps; 
     int32_t decelSteps; 
 
+    /// Direction bitmask (bit0=X, bit1=Y, bit2=Z).
     uint8_t dirMask;
 
+    /// ARR increment/decrement value per accel step.
     int16_t accIncrease;
+    /// Whether deceleration phase should be applied.
     bool slowDown;
+    /// Whether this command performs homing behavior.
     bool homing;
 };
 

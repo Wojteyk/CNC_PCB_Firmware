@@ -11,8 +11,14 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 
+/**
+ * @file motionController.hpp
+ * @brief Low-level step generation and runtime execution of StepCmd segments.
+ */
+
 static constexpr uint8_t HW_QUEUE_SIZE = 32;
 
+/** @brief Motion controller runtime state. */
 enum struct WorkingState
 {
     Idle = 0,
@@ -21,9 +27,20 @@ enum struct WorkingState
     Error = 3,
 };
 
+/**
+ * @brief Step pulse generator and command executor.
+ */
 template <typename driver> class MotionController
 {
   public:
+        /**
+         * @brief Construct motion controller.
+         * @param tim Timer used as step interrupt source.
+         * @param axisX Axis driver for X.
+         * @param axisY Axis driver for Y.
+         * @param axisZ Axis driver for Z.
+         * @param config Machine configuration reference.
+         */
     MotionController(TIM_HandleTypeDef* tim,
                      driver& axisX,
                      driver& axisY,
@@ -41,6 +58,7 @@ template <typename driver> class MotionController
 
     static MotionController* instance;
 
+    /** @brief Initialize drivers, queue and timer ISR. */
     Result<void> init()
     {
         if (_stepsQueue == NULL)
@@ -54,7 +72,7 @@ template <typename driver> class MotionController
             return res;
 
         _currentArr = _config.startingSpeedToArr;
-        __HAL_TIM_SET_AUTORELOAD(_tim, _currentArr); // safe feedrate at the start
+        __HAL_TIM_SET_AUTORELOAD(_tim, _currentArr);
 
         if (HAL_TIM_Base_Start_IT(_tim) != HAL_OK)
         {
@@ -63,12 +81,17 @@ template <typename driver> class MotionController
         return Result<void>();
     }
 
+    /**
+     * @brief Queue one step command.
+     * @param stepCmd Prepared command from planner.
+     */
     void addMove(const StepCmd& stepCmd)
     {
 
         xQueueSend(_stepsQueue, &stepCmd, portMAX_DELAY);
     }
 
+    /** @brief Timer tick handler called from ISR context. */
     void tick()
     {
         if (_workingState == WorkingState::Idle)
@@ -134,7 +157,7 @@ template <typename driver> class MotionController
         if (stepMade)
         {
             for (volatile int i = 0; i < 10; i++)
-                ; // dealy for tmc to see slope
+                ;
             _axisX.stepLow();
             _axisY.stepLow();
             _axisZ.stepLow();
@@ -179,7 +202,6 @@ template <typename driver> class MotionController
             if (!tryLoadNextCommand())
             {
                 _workingState = WorkingState::Idle;
-                //__HAL_TIM_SET_AUTORELOAD(_tim, _config.startingSpeedToArr);
             }
         }
     }

@@ -2,12 +2,19 @@
 #include <stdint.h>
 #include "queue.h"
 
+/**
+ * @file lcdConstants.hpp
+ * @brief GUI constants, palette and built-in bitmap font.
+ */
+
+/** @brief GUI screen events. */
 enum class GuiEvent : uint8_t {
     ShowMain,
     ShowControls,
     ShowError,
 };
 
+/** @brief Touch input state machine. */
 enum struct TouchState
 {
     IDLE,
@@ -16,12 +23,15 @@ enum struct TouchState
     RELEASED,
 };
 
+/** @brief GUI event queue used by display task. */
 extern QueueHandle_t guiEventQueue;
 
-// Global variable to store current error code for display
+/** @brief Last error shown on error screen. */
 extern ErrorCode g_lastError;
 
 namespace Colors {
+
+    /** @brief Predefined RGB565 GUI palette. */
 
     static constexpr uint16_t Black       = 0x0000;
     static constexpr uint16_t White       = 0xFFFF;
@@ -44,16 +54,19 @@ namespace Colors {
     static constexpr uint16_t Warning     = Orange;    
     static constexpr uint16_t Idle        = BlueishGrey; 
 
+    /** @brief Convert 24-bit RGB to RGB565. */
     constexpr uint16_t make(uint8_t r, uint8_t g, uint8_t b) {
         return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
     }
 }
 
+/** @brief Font glyph width in pixels. */
 static constexpr uint8_t FONT_WIDTH = 7;
+/** @brief Font glyph height in pixels. */
 static constexpr uint8_t FONT_HEIGHT = 10;
 
 static const uint8_t Font7x10[95][10] = {
-    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // Spacja
+    {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // Space
     {0x00, 0x00, 0x18, 0x3C, 0x3C, 0x3C, 0x18, 0x00, 0x18, 0x00}, // !
     {0x00, 0x66, 0x66, 0x66, 0x24, 0x00, 0x00, 0x00, 0x00, 0x00}, // "
     {0x00, 0x00, 0x6C, 0x6C, 0xFE, 0x6C, 0xFE, 0x6C, 0x6C, 0x00}, // #

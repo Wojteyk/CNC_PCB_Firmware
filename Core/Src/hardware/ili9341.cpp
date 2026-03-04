@@ -74,7 +74,8 @@ Result<void> ILI9341::fillScreen(uint16_t color)
 {
     if (auto res = setWindow(0, X_MAX, 0, Y_MAX); !res.isOk())
         return res;
-    pushColorBlock(color, 76800*2);
+    if (auto res = pushColorBlock(color, 76800); !res.isOk())
+        return res;
 
     return Result<void>(ErrorCode::Ok);
 }
@@ -120,7 +121,12 @@ Result<void> ILI9341::pushColorBlock(uint32_t color, uint32_t pixelCnt)
             return Result<void>(ErrorCode::LCD_TransmissionFailed);
         }
 
-        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        if (ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(200)) == 0)
+        {
+            HAL_GPIO_WritePin(_cs_port, _cs_pin, GPIO_PIN_SET);
+            _taskToNotify = nullptr;
+            return Result<void>(ErrorCode::LCD_TransmissionFailed);
+        }
         remaining -= chunkSize;
     }
 
@@ -166,7 +172,12 @@ Result<void> ILI9341::drawChar(uint16_t x, uint16_t y, char c, uint16_t color, u
         return Result<void>(ErrorCode::ILI9341_SPIFailed);
     }
 
-    ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+    if (ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(200)) == 0)
+    {
+        HAL_GPIO_WritePin(_cs_port, _cs_pin, GPIO_PIN_SET);
+        _taskToNotify = nullptr;
+        return Result<void>(ErrorCode::LCD_TransmissionFailed);
+    }
     HAL_GPIO_WritePin(_cs_port, _cs_pin, GPIO_PIN_SET);
     _taskToNotify = nullptr;
 

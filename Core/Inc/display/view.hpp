@@ -4,16 +4,42 @@
 #include "FreeRTOS.h"
 #include <cstring>
 #include <cstdio>
+#include <array>
 #include "queue.h"
 #include "common/motionTypes.hpp"
 
+/**
+ * @file view.hpp
+ * @brief GUI view hierarchy for main menu, controls and error page.
+ */
+
 extern QueueHandle_t gcodeQueue;
 
+namespace
+{
+constexpr size_t GCODE_MSG_SIZE = 64;
+
+/** @brief Send one G-code line to queue. */
+inline void sendGcode(QueueHandle_t queue, const char* cmd)
+{
+    if (queue == nullptr || cmd == nullptr)
+    {
+        return;
+    }
+
+    std::array<char, GCODE_MSG_SIZE> msg{};
+    std::snprintf(msg.data(), msg.size(), "%s", cmd);
+    xQueueSend(queue, msg.data(), 0);
+}
+} // namespace
+
+/** @brief Base view composed of widgets. */
 class View
 {
   public:
     virtual ~View() = default;
 
+        /** @brief Draw all registered widgets. */
     void drawAll(IGuiDriver& driver)
     {
         for (uint8_t i = 0; i < _widgetCnt; i++)
@@ -22,6 +48,7 @@ class View
         }
     }
 
+    /** @brief Dispatch touch-press to widgets. */
     void handleTouch(Point p)
     {
         for (uint8_t i = 0; i < _widgetCnt; i++)
@@ -30,6 +57,7 @@ class View
         }
     }
 
+    /** @brief Dispatch touch-hold to widgets. */
     void handleHold(Point p)
     {
         for (uint8_t i = 0; i < _widgetCnt; i++)
@@ -38,6 +66,7 @@ class View
         }
     }
 
+    /** @brief Dispatch touch-release to widgets. */
     void handleRelease()
     {
         for (uint8_t i = 0; i < _widgetCnt; i++)
@@ -46,6 +75,7 @@ class View
         }
     }
 
+    /** @brief Mark all widgets to redraw next frame. */
     void forceRedraw()
     {
         for (uint8_t i = 0; i < _widgetCnt; i++)
@@ -55,6 +85,7 @@ class View
     }
 
   protected:
+        /** @brief Register widget in this view. */
     void addWidget(Widget* w)
     {
         if (_widgetCnt < MAX_WIDGETS)
@@ -69,9 +100,11 @@ class View
     uint8_t _widgetCnt = 0;
 };
 
+/** @brief Main menu view. */
 class MainMenu : public View
 {
   public:
+        /** @brief Construct main menu view. */
     MainMenu(QueueHandle_t gcodeQueue)
         : _gcodeQueue(gcodeQueue)
         , _mainLabel(135, 20, "CNC PCB", Colors::Blue)
@@ -102,12 +135,14 @@ class MainMenu : public View
         addWidget(&_btnSettings);
     }
 
+    /** @brief Switch active GUI page to controls. */
     static void moveToControls(void* ctx)
     {
         GuiEvent ev = GuiEvent::ShowControls;
         xQueueSend(guiEventQueue, &ev, 0);
     }
 
+    /** @brief Queue startup demo/toolpath G-code sequence. */
     static void sendStartGcode(void* ctx)
     {
         auto* self = static_cast<MainMenu*>(ctx);
@@ -115,43 +150,64 @@ class MainMenu : public View
         {
             const char* cmd;
 
-            cmd = "G0 X2.50 Y0.00 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0); // Najazd na start (prawy brzeg)
-            cmd = "G1 Z0"; xQueueSend(self->_gcodeQueue, cmd, 0);             // Opuszczenie narzędzia
+            cmd = "G0 X2.50 Y0.00 Z2";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 Z0";
+            sendGcode(self->_gcodeQueue, cmd);
 
-            // cmd = cmd = "G1 X20 Y10"; xQueueSend(self->_gcodeQueue, cmd, 0);
-            // cmd = cmd = "G1 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-            // cmd = cmd = "G1 X40 Y10"; xQueueSend(self->_gcodeQueue, cmd, 0);
-            // cmd = cmd = "G1 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-            // cmd = cmd = "G1 X60 Y10"; xQueueSend(self->_gcodeQueue, cmd, 0);
-            // cmd = cmd = "G1 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        // Rysowanie 24 segmentów
-        cmd = "G1 X2.41 Y0.65"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X2.17 Y1.25"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X1.77 Y1.77"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X1.25 Y2.17"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X0.65 Y2.41"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X0.00 Y2.50"; xQueueSend(self->_gcodeQueue, cmd, 0); // Górny punkt
-        cmd = "G1 X-0.65 Y2.41"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X-1.25 Y2.17"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X-1.77 Y1.77"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X-2.17 Y1.25"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X-2.41 Y0.65"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X-2.50 Y0.00"; xQueueSend(self->_gcodeQueue, cmd, 0); // Lewy punkt
-        cmd = "G1 X-2.41 Y-0.65"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X-2.17 Y-1.25"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X-1.77 Y-1.77"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X-1.25 Y-2.17"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X-0.65 Y-2.41"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X0.00 Y-2.50"; xQueueSend(self->_gcodeQueue, cmd, 0); // Dolny punkt
-        cmd = "G1 X0.65 Y-2.41"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X1.25 Y-2.17"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X1.77 Y-1.77"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X2.17 Y-1.25"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X2.41 Y-0.65"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G1 X2.50 Y0.00"; xQueueSend(self->_gcodeQueue, cmd, 0);  // Zamknięcie okręgu
+            cmd = "G1 X2.41 Y0.65";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X2.17 Y1.25";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X1.77 Y1.77";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X1.25 Y2.17";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X0.65 Y2.41";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X0.00 Y2.50";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X-0.65 Y2.41";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X-1.25 Y2.17";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X-1.77 Y1.77";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X-2.17 Y1.25";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X-2.41 Y0.65";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X-2.50 Y0.00";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X-2.41 Y-0.65";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X-2.17 Y-1.25";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X-1.77 Y-1.77";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X-1.25 Y-2.17";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X-0.65 Y-2.41";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X0.00 Y-2.50";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X0.65 Y-2.41";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X1.25 Y-2.17";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X1.77 Y-1.77";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X2.17 Y-1.25";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X2.41 Y-0.65";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G1 X2.50 Y0.00";
+            sendGcode(self->_gcodeQueue, cmd);
 
-        cmd = "G0 Z2"; xQueueSend(self->_gcodeQueue, cmd, 0);
-        cmd = "G0 X0 Y0"; xQueueSend(self->_gcodeQueue, cmd, 0);
+            cmd = "G0 Z2";
+            sendGcode(self->_gcodeQueue, cmd);
+            cmd = "G0 X0 Y0";
+            sendGcode(self->_gcodeQueue, cmd);
         }
     }
 
@@ -164,8 +220,10 @@ class MainMenu : public View
     Button _btnSettings;
 };
 
+/** @brief Manual control and homing view. */
 class Controls : public View
 {
+    /** @brief Configuration for jog button callbacks. */
     struct JogConfig
     {
         const char* cmdPress;
@@ -175,14 +233,15 @@ class Controls : public View
     };
 
   public:
+        /** @brief Construct manual control view. */
     Controls(QueueHandle_t gcodeQueue)
         : _gcodeQueue(gcodeQueue)
-        , _cfgXUp{nullptr, "G91 X0.5" ,"G92 X0.2" , gcodeQueue}
-        , _cfgXDown{nullptr,"G91 X-0.5", "G92 X-0.2", gcodeQueue}
-        , _cfgHomeX{"G10 X0",nullptr, nullptr, gcodeQueue}
+        , _cfgXUp{nullptr, "G91 X0.5", "G92 X0.2", gcodeQueue}
+        , _cfgXDown{nullptr, "G91 X-0.5", "G92 X-0.2", gcodeQueue}
+        , _cfgHomeX{"G10 X0", nullptr, nullptr, gcodeQueue}
         , _cfgYUp{nullptr, "G91 Y0.5", "G92 Y0.2", gcodeQueue}
-        , _cfgYDown{nullptr,"G91 Y-0.5","G92 Y-0.2", gcodeQueue}
-        , _cfgHomeY{"G10 Y0",nullptr, nullptr, gcodeQueue}
+        , _cfgYDown{nullptr, "G91 Y-0.5", "G92 Y-0.2", gcodeQueue}
+        , _cfgHomeY{"G10 Y0", nullptr, nullptr, gcodeQueue}
         , _cfgZUp{nullptr, "G91 Z0.5", "G92 Z0.2", gcodeQueue}
         , _cfgZDown{nullptr, "G91 Z-0.5", "G92 Z-0.1", gcodeQueue}
         , _cfgHomeZ{"G10 Z0", nullptr, nullptr, gcodeQueue}
@@ -292,16 +351,16 @@ class Controls : public View
                     nullptr,
                     &_cfgHomeZ)
         , _btnHoming(260,
-                    110,
-                    50,
-                    50,
-                    "HOME",
-                    Colors::White,
-                    Colors::Green,
-                    jogPressHandler,
-                    nullptr,
-                    jogReleaseHandler,
-                    &_cfgHoming)
+                     110,
+                     50,
+                     50,
+                     "HOME",
+                     Colors::White,
+                     Colors::Green,
+                     jogPressHandler,
+                     nullptr,
+                     jogReleaseHandler,
+                     &_cfgHoming)
         , _btnBack(250, 190, 60, 40, "Back", Colors::White, Colors::Orange, backToMenu)
     {
         addWidget(&_mainLabel);
@@ -322,6 +381,7 @@ class Controls : public View
         addWidget(&_btnBack);
     }
 
+    /** @brief Update displayed target coordinates. */
     void updateCurrentPos(const MachineState& state)
     {
         char buf[16];
@@ -335,33 +395,37 @@ class Controls : public View
         _zLabel.setText(buf);
     }
 
+    /** @brief Handle jog press action. */
     static void jogPressHandler(void* ctx)
     {
         auto* cfg = static_cast<JogConfig*>(ctx);
         if (cfg && cfg->cmdPress)
         {
-            xQueueSend(cfg->queue, cfg->cmdPress, 0);
+            sendGcode(cfg->queue, cfg->cmdPress);
         }
     }
 
+    /** @brief Handle jog hold action. */
     static void jogHoldHandler(void* ctx)
     {
         auto* cfg = static_cast<JogConfig*>(ctx);
         if (cfg && cfg->cmdHold)
         {
-            xQueueSend(cfg->queue, cfg->cmdHold, 0);
+            sendGcode(cfg->queue, cfg->cmdHold);
         }
     }
 
+    /** @brief Handle jog release action. */
     static void jogReleaseHandler(void* ctx)
     {
         auto* cfg = static_cast<JogConfig*>(ctx);
         if (cfg && cfg->cmdRelease)
         {
-            xQueueSend(cfg->queue, cfg->cmdRelease, 0);
+            sendGcode(cfg->queue, cfg->cmdRelease);
         }
     }
 
+    /** @brief Return to main menu view. */
     static void backToMenu(void* ctx)
     {
         GuiEvent ev = GuiEvent::ShowMain;
@@ -403,20 +467,22 @@ class Controls : public View
     Button _btnBack;
 };
 
-
+/** @brief Error display view. */
 class ErrorPage : public View
 {
-    public: 
+  public:
+        /** @brief Construct error view. */
     ErrorPage()
-    :_mainLabel(135, 10, "Errors", Colors::Blue)
-    ,_errorInfo(100,30,"Cricital Error", Colors::Warning)
-    , _btnBack(250, 190, 60, 40, "Back", Colors::White, Colors::Orange, backToMenu)
+        : _mainLabel(135, 10, "Errors", Colors::Blue)
+        , _errorInfo(100, 30, "Critical Error", Colors::Warning)
+        , _btnBack(250, 190, 60, 40, "Back", Colors::White, Colors::Orange, backToMenu)
     {
         addWidget(&_mainLabel);
         addWidget(&_errorInfo);
         addWidget(&_btnBack);
     }
 
+    /** @brief Update shown error message. */
     void setError(ErrorCode e)
     {
         const char* errorMsg = ErrorHandler::toMessage(e);
@@ -424,16 +490,15 @@ class ErrorPage : public View
         forceRedraw();
     }
 
+    /** @brief Return to main menu view. */
     static void backToMenu(void* ctx)
     {
         GuiEvent ev = GuiEvent::ShowMain;
         xQueueSend(guiEventQueue, &ev, 0);
     }
-    
-        
-    private:
+
+  private:
     Label _mainLabel;
     Label _errorInfo;
     Button _btnBack;
-
 };
