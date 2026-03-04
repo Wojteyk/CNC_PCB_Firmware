@@ -6,6 +6,7 @@
 #include "main.h"
 #include "planner/planner.hpp"
 #include "portmacro.h"
+#include <cstring>
 
 void GcodeParser::run()
 {
@@ -19,9 +20,11 @@ void GcodeParser::run()
     // }
     while (true)
     {
-        if (xQueueReceive(_gcodeQueue, &lineBuffer, portMAX_DELAY) == pdPASS)
+        if (xQueueReceive(_gcodeQueue, lineBuffer, portMAX_DELAY) == pdPASS)
         {
-            std::string_view s(lineBuffer);
+            lineBuffer[BUFFER_SIZE - 1] = '\0';
+            size_t lineLen = strnlen(lineBuffer, BUFFER_SIZE);
+            std::string_view s(lineBuffer, lineLen);
             auto res = parseLine(s);
 
             if (res.isOk())

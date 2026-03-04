@@ -11,11 +11,36 @@
 #include "FreeRTOS.h"
 #include "queue.h"
 
+/**
+ * @file motionController.hpp
+ * @brief Low-level step generation and runtime execution of StepCmd segments.
+ */
+
 static constexpr uint8_t HW_QUEUE_SIZE = 32;
 
+/** @brief Motion controller runtime state. */
+enum struct WorkingState
+{
+    Idle = 0,
+    Working = 1,
+    Homing = 2,
+    Error = 3,
+};
+
+/**
+ * @brief Step pulse generator and command executor.
+ */
 template <typename driver> class MotionController
 {
   public:
+        /**
+         * @brief Construct motion controller.
+         * @param tim Timer used as step interrupt source.
+         * @param axisX Axis driver for X.
+         * @param axisY Axis driver for Y.
+         * @param axisZ Axis driver for Z.
+         * @param config Machine configuration reference.
+         */
     MotionController(TIM_HandleTypeDef* tim,
                      driver& axisX,
                      driver& axisY,
@@ -33,6 +58,7 @@ template <typename driver> class MotionController
 
     static MotionController* instance;
 
+    /** @brief Initialize drivers, queue and timer ISR. */
     Result<void> init()
     {
         if (_stepsQueue == NULL)
@@ -46,7 +72,7 @@ template <typename driver> class MotionController
             return res;
 
         _currentArr = _config.startingSpeedToArr;
-        __HAL_TIM_SET_AUTORELOAD(_tim, _currentArr); // safe feedrate at the start
+        __HAL_TIM_SET_AUTORELOAD(_tim, _currentArr);
 
         if (HAL_TIM_Base_Start_IT(_tim) != HAL_OK)
         {
@@ -55,25 +81,50 @@ template <typename driver> class MotionController
         return Result<void>();
     }
 
+    /**
+     * @brief Queue one step command.
+     * @param stepCmd Prepared command from planner.
+     */
     void addMove(const StepCmd& stepCmd)
     {
 
         xQueueSend(_stepsQueue, &stepCmd, portMAX_DELAY);
     }
 
+    /** @brief Timer tick handler called from ISR context. */
     void tick()
     {
-        // HAL_GPIO_TogglePin(STEP_X_GPIO_Port, STEP_X_Pin);
-
-        if (!_isActive)
+        if (_workingState == WorkingState::Idle)
         {
             if (!tryLoadNextCommand())
                 return;
         }
+        else if (_workingState == WorkingState::Homing)
+        {
+            _currentCmd.dZ = 0;
+            if(HAL_GPIO_ReadPin(XAXIS_ENDSW_GPIO_Port,XAXIS_ENDSW_Pin))
+            {
+                 _currentCmd.dX = 0;
+            }
+            if(HAL_GPIO_ReadPin(YAXIS_ENDSW_GPIO_Port,YAXIS_ENDSW_Pin))
+            {
+                _currentCmd.dY = 0;
+            }
+            if(_currentCmd.dX ==0 && _currentCmd.dY == 0)
+            {
+                _currentCmd.dZ = _dda.totalSteps;
+                if(!HAL_GPIO_ReadPin(ZAXIS_ENDSW_GPIO_Port, ZAXIS_ENDSW_Pin))
+                {
+                    _dda.totalSteps = 0; 
+                    _dda.currentSteps = 0;
+                }
+                
+            }
+        } 
 
         if (_dda.totalSteps <= 0)
         {
-            _isActive = false;
+            _workingState = WorkingState::Idle;
             return;
         }
 
@@ -106,7 +157,7 @@ template <typename driver> class MotionController
         if (stepMade)
         {
             for (volatile int i = 0; i < 10; i++)
-                ; // dealy for tmc to see slope
+                ;
             _axisX.stepLow();
             _axisY.stepLow();
             _axisZ.stepLow();
@@ -150,8 +201,7 @@ template <typename driver> class MotionController
         {
             if (!tryLoadNextCommand())
             {
-                _isActive = false;
-                __HAL_TIM_SET_AUTORELOAD(_tim, _config.startingSpeedToArr);
+                _workingState = WorkingState::Idle;
             }
         }
     }
@@ -167,13 +217,23 @@ template <typename driver> class MotionController
             _dda.accX = _dda.accY = _dda.accZ = 0;
             _dda.currentSteps = 0;
             _dda.totalSteps = nextCmd.totalSteps;
-
-            _axisX.setDirection((nextCmd.dirMask & 0x01) != 0);
-            _axisY.setDirection((nextCmd.dirMask & 0x02) != 0);
-            _axisZ.setDirection((nextCmd.dirMask & 0x04) != 0);
+            
+            if(nextCmd.homing)
+            {
+                _workingState = WorkingState::Homing;
+                _axisX.setDirection(0);
+                _axisY.setDirection(0);
+                _axisZ.setDirection(0);
+            }
+            else{
+                _workingState = WorkingState::Working;
+                _axisX.setDirection((nextCmd.dirMask & 0x01) != 0);
+                _axisY.setDirection((nextCmd.dirMask & 0x02) != 0);
+                _axisZ.setDirection((nextCmd.dirMask & 0x04) != 0);
+            }
 
             _currentCmd = nextCmd;
-            _isActive = true;
+            
 
             return true;
         }
@@ -181,12 +241,17 @@ template <typename driver> class MotionController
         return false;
     }
 
+    void startHoming()
+    {
+        
+    }
+
     TIM_HandleTypeDef* _tim;
     driver& _axisX;
     driver& _axisY;
     driver& _axisZ;
 
-    volatile bool _isActive = false;
+    volatile WorkingState _workingState = WorkingState::Idle;
     volatile uint32_t _currentArr;
 
     StepCmd _currentCmd;

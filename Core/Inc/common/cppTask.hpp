@@ -7,9 +7,23 @@
 #include <cstdint>
 #include "common/systemError.hpp"
 
+/**
+ * @file cppTask.hpp
+ * @brief C++ wrapper around FreeRTOS task creation.
+ */
+
+/**
+ * @brief Base class for FreeRTOS tasks implemented in C++.
+ */
 class CppTask
 {
   public:
+    /**
+     * @brief Construct task descriptor.
+     * @param name Task name.
+     * @param stackSize Task stack size in words.
+     * @param priority FreeRTOS priority.
+     */
     CppTask(const char* name, uint16_t stackSize, UBaseType_t priority)
         : _name(name)
         , _stackSize(stackSize)
@@ -20,6 +34,10 @@ class CppTask
 
     virtual ~CppTask() = default;
 
+    /**
+     * @brief Create and start the task.
+     * @return Error status of task creation.
+     */
     Result<void> start()
     {
         if (_handle != nullptr)
@@ -36,9 +54,11 @@ class CppTask
     }
 
   protected:
+    /** @brief Task body implemented by derived class. */
     virtual void run() = 0;
 
   private:
+    /** @brief Static entry passed to xTaskCreate. */
     static void taskEntryPoint(void* params)
     {
         CppTask* task = static_cast<CppTask*>(params);

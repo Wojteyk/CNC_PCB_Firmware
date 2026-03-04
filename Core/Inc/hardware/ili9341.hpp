@@ -10,10 +10,19 @@
 
 #define LCD_BUFFER_SIZE 1600
 
+/**
+ * @file ili9341.hpp
+ * @brief SPI LCD driver for ILI9341 controller.
+ */
+
+/**
+ * @brief ILI9341 LCD driver implementing IGuiDriver.
+ */
 class ILI9341 : public IGuiDriver
 {
 
   public:
+    /** @brief Construct LCD driver. */
     ILI9341(SPI_HandleTypeDef* hspi,
             GPIO_TypeDef* cs_port,
             uint16_t cs_pin,
@@ -22,16 +31,29 @@ class ILI9341 : public IGuiDriver
             GPIO_TypeDef* rst_port,
             uint16_t rst_pin);
 
+    /** @brief Initialize LCD controller. */
     Result<void> init();
 
+    /**
+     * @brief Fill entire screen with one color.
+     * @param color RGB565 color.
+     */
     Result<void> fillScreen(uint16_t color) override;
 
+    /** @brief TX complete callback hook for async SPI transfers. */
     void handleTxComplete();
 
+    /** @brief Set active drawing window. */
     Result<void> setWindow(int16_t x0, int16_t x1, int16_t y0, int16_t y1);
 
+    /**
+     * @brief Fill rectangle area with one color.
+     */
     Result<void> fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) override;
 
+    /**
+     * @brief Draw ASCII text using built-in font.
+     */
     Result<void> drawString(int16_t x, int16_t y, const char* str, uint16_t color, uint16_t bg) override;
 
   private:
