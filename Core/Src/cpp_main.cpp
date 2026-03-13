@@ -4,6 +4,7 @@
 #include "display/displayController.hpp"
 #include "planner/planner.hpp"
 #include "Gcode/GcodeParser.hpp"
+#include "Gcode/uart.hpp"
 #include "hardware/tmc2209.hpp"
 #include "hardware/motionController.hpp"
 #include "common/machineConfig.hpp"
@@ -14,6 +15,7 @@
 extern "C" SPI_HandleTypeDef hspi1;
 extern "C" SPI_HandleTypeDef hspi2;
 extern "C" UART_HandleTypeDef huart1;
+extern "C" UART_HandleTypeDef huart6;
 extern "C" TIM_HandleTypeDef htim10;
 
 size_t freeHeapNow;
@@ -28,6 +30,7 @@ TMC2209 yAxis(&huart1, 2, YAXIS_DIR_GPIO_Port, YAXIS_DIR_Pin, YAXIS_STEP_GPIO_Po
 MotionController<TMC2209> mController(&htim10, xAxis, yAxis, zAxis, globalConfig);
 Planner<TMC2209> planner(&mController, globalConfig);
 GcodeParser gParser(planner.getQueueHandle());
+Uart uartPc (&huart6, 256, gParser.getQueueHandle());
 
 ILI9341 displayDriver(&hspi1,
                       LCD_CS_GPIO_Port,
@@ -53,6 +56,8 @@ extern "C" void cpp_main()
 
     planner.start();
     gParser.start();
+    
+    uartPc.start();
 
     while (1)
     {
@@ -74,5 +79,13 @@ extern "C" void MotionController_Tick()
     if (MotionController<TMC2209>::instance != nullptr)
     {
         MotionController<TMC2209>::instance->tick();
+    }
+}
+
+extern "C" void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+    if (huart->Instance == USART6)
+    {
+        uartPc.handleCallback();
     }
 }
