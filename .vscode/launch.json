@@ -6,7 +6,12 @@
             "type": "cortex-debug",
             "request": "launch",
             "executable": "${workspaceFolder}/build/Debug/CNC_PCB_FIRMWARE.elf",
-            "servertype": "stlink",
+            "gdbPath": "/home/wojtek/.local/share/arm-gnu-toolchain-14/bin/arm-none-eabi-gdb",
+            "servertype": "openocd",
+            "configFiles": [
+                "interface/stlink.cfg",
+                "target/stm32f4x.cfg"
+            ],
             "device": "STM32F405xx",
             "cwd": "${workspaceFolder}",
             "runToMain": true,

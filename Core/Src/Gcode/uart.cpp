@@ -38,7 +38,6 @@ void Uart::run()
 {
     _taskHandle = xTaskGetCurrentTaskHandle();
     
-    // Start DMA też najlepiej dać tutaj, zaraz przed pętlą
     HAL_UARTEx_ReceiveToIdle_DMA(_huart, _dmaBuffer, _bufferSize);
     __HAL_DMA_DISABLE_IT(_huart->hdmarx, DMA_IT_HT);
     while (1)
@@ -110,7 +109,10 @@ void Uart::processData(const uint8_t* data, uint16_t length)
 
                 if (_targetQueue != NULL)
                 {
-                    xQueueSend(_targetQueue, _lineBuffer, 0);
+                    if(xQueueSend(_targetQueue, _lineBuffer, portMAX_DELAY) == pdPASS)
+                    {
+                        sendOk();
+                    }
                 }
                 
                 _linePos = 0;

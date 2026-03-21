@@ -53,8 +53,8 @@ struct MachineConfig
     uint32_t zStepMax = 35*stepsPerMM_Z;     ///< Soft limit for Z axis in steps.
 
     uint32_t startingSpeedToArr = 2500;      ///< Start speed ARR (~400 Hz).
-    uint32_t defaultTargetSpeedToArr = 80;   ///< Default target ARR (~10 kHz).
-    uint32_t rapidTargetSpeedToArr = 60;     ///< Rapid target ARR (~14 kHz).
+    uint32_t defaultTargetSpeedToArr = 100;   ///< Default target ARR (~10 kHz).
+    uint32_t rapidTargetSpeedToArr = 80;     ///< Rapid target ARR (~14 kHz).
     uint32_t slowTargetSpeedToArr = 200;
 
     /** @brief Linear acceleration profile. */
