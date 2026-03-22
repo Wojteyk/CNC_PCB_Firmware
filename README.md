@@ -128,6 +128,14 @@ Pin assignments and low-level init are defined in CubeMX-generated sources (`mai
 
 ---
 
+## Working Prototype Photos
+
+![Working prototype photo 1](img/IMG_20260315_143235153_HDR.jpg)
+
+![Working prototype photo 2](img/IMG_20260322_145018435_HDR.jpg)
+
+---
+
 ## Notes
 
 - C++ modules are compiled with embedded-focused flags (`-fno-rtti`, `-fno-exceptions`)
