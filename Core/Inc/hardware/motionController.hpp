@@ -10,6 +10,7 @@
 #include "stm32f4xx_hal_tim.h"
 #include "FreeRTOS.h"
 #include "queue.h"
+#include <algorithm>
 
 /**
  * @file motionController.hpp
@@ -72,6 +73,10 @@ template <typename driver> class MotionController
             return res;
 
         _currentArr = _config.startingSpeedToArr;
+        _currentSpeedSps = arrToSpeed(_currentArr);
+        _currentStartSpeedSps = _currentSpeedSps;
+        _currentTargetSpeedSps = _currentSpeedSps;
+        _currentAccelSps2 = 0.0f;
         __HAL_TIM_SET_AUTORELOAD(_tim, _currentArr);
 
         if (HAL_TIM_Base_Start_IT(_tim) != HAL_OK)
@@ -167,28 +172,34 @@ template <typename driver> class MotionController
 
         bool arrChanged = false;
 
-        if (_dda.currentSteps < _currentCmd.accelSteps)
+        const bool inAccel = (_dda.currentSteps < _currentCmd.accelSteps);
+        const bool inDecel = (_dda.currentSteps >= _currentCmd.decelSteps && _currentCmd.slowDown);
+        if ((inAccel || inDecel) && _currentAccelSps2 > 0.0f)
         {
-            if (_currentArr > _currentCmd.targetArr)
-            {
-                if (_currentArr > (_currentCmd.targetArr + _currentCmd.accIncrease))
-                    _currentArr -= _currentCmd.accIncrease;
-                else
-                    _currentArr = _currentCmd.targetArr;
+            const float dt = static_cast<float>(_currentArr) / static_cast<float>(_config.stepTimerClockHz);
 
+            if (inAccel && _currentSpeedSps < _currentTargetSpeedSps)
+            {
+                _currentSpeedSps += (_currentAccelSps2 * dt);
+                if (_currentSpeedSps > _currentTargetSpeedSps)
+                {
+                    _currentSpeedSps = _currentTargetSpeedSps;
+                }
                 arrChanged = true;
             }
-        }
-
-        else if (_dda.currentSteps >= _currentCmd.decelSteps && _currentCmd.slowDown)
-        {
-            if (_currentArr < _currentCmd.startArr)
+            else if (inDecel && _currentSpeedSps > _currentStartSpeedSps)
             {
-                if (_currentArr < (_currentCmd.startArr - _currentCmd.accIncrease))
-                    _currentArr += _currentCmd.accIncrease;
-                else
-                    _currentArr = _currentCmd.startArr;
+                _currentSpeedSps -= (_currentAccelSps2 * dt);
+                if (_currentSpeedSps < _currentStartSpeedSps)
+                {
+                    _currentSpeedSps = _currentStartSpeedSps;
+                }
                 arrChanged = true;
+            }
+
+            if (arrChanged)
+            {
+                _currentArr = speedToArr(_currentSpeedSps);
             }
         }
 
@@ -233,12 +244,53 @@ template <typename driver> class MotionController
             }
 
             _currentCmd = nextCmd;
+
+            const uint32_t cmdStartArr =
+                (_currentCmd.startArr > 0) ? static_cast<uint32_t>(_currentCmd.startArr) : 1U;
+            const uint32_t cmdTargetArr =
+                (_currentCmd.targetArr > 0) ? static_cast<uint32_t>(_currentCmd.targetArr) : 1U;
+
+            _currentStartSpeedSps = arrToSpeed(cmdStartArr);
+            _currentTargetSpeedSps = arrToSpeed(cmdTargetArr);
+
+            if (_currentArr == 0U)
+            {
+                _currentArr = cmdStartArr;
+                __HAL_TIM_SET_AUTORELOAD(_tim, _currentArr);
+            }
+
+            _currentSpeedSps = arrToSpeed(_currentArr);
+
+            if (_currentCmd.accelSteps > 0 && _currentTargetSpeedSps > _currentStartSpeedSps)
+            {
+                const float startV2 = _currentStartSpeedSps * _currentStartSpeedSps;
+                const float targetV2 = _currentTargetSpeedSps * _currentTargetSpeedSps;
+                _currentAccelSps2 =
+                    (targetV2 - startV2) / (2.0f * static_cast<float>(_currentCmd.accelSteps));
+            }
+            else
+            {
+                _currentAccelSps2 = 0.0f;
+            }
             
 
             return true;
         }
 
         return false;
+    }
+
+    float arrToSpeed(uint32_t arr) const
+    {
+        const uint32_t safeArr = (arr == 0U) ? 1U : arr;
+        return static_cast<float>(_config.stepTimerClockHz) / static_cast<float>(safeArr);
+    }
+
+    uint32_t speedToArr(float speedSps) const
+    {
+        const float safeSpeed = std::max(speedSps, 1.0f);
+        const float arr = static_cast<float>(_config.stepTimerClockHz) / safeSpeed;
+        return static_cast<uint32_t>(std::max(arr, 1.0f));
     }
 
     void startHoming()
@@ -253,6 +305,10 @@ template <typename driver> class MotionController
 
     volatile WorkingState _workingState = WorkingState::Idle;
     volatile uint32_t _currentArr;
+    float _currentSpeedSps = 0.0f;
+    float _currentStartSpeedSps = 0.0f;
+    float _currentTargetSpeedSps = 0.0f;
+    float _currentAccelSps2 = 0.0f;
 
     StepCmd _currentCmd;
     QueueHandle_t _stepsQueue;

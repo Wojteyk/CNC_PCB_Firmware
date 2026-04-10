@@ -95,6 +95,8 @@ Result<MotionCmd> GcodeParser::parseLine(std::string_view line)
                 float f;
                 if (!parseFloat(line, f))
                     return Result<MotionCmd>(ErrorCode::Parser_InvalidFormat);
+                if (f <= 0.0f)
+                    return Result<MotionCmd>(ErrorCode::Parser_ValueOutOfRange);
                 cmd.f = f;
             }
             continue;

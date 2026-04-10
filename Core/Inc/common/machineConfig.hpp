@@ -56,6 +56,7 @@ struct MachineConfig
     uint32_t defaultTargetSpeedToArr = 100;   ///< Default target ARR (~10 kHz).
     uint32_t rapidTargetSpeedToArr = 80;     ///< Rapid target ARR (~14 kHz).
     uint32_t slowTargetSpeedToArr = 200;
+    uint32_t stepTimerClockHz = 1000000;     ///< TIM tick after prescaler [Hz].
 
     /** @brief Linear acceleration profile. */
     struct Acceleration
