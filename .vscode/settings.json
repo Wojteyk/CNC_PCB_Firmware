@@ -1,9 +1,0 @@
-{
-    "C_Cpp.intelliSenseEngine": "default",
-    "C_Cpp.errorSquiggles": "enabled",
-    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/Debug/compile_commands.json",
-
-    "cmake.configureArgs": [
-        "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
-    ]
-}

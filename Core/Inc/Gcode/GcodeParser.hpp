@@ -24,7 +24,7 @@ class GcodeParser : public CppTask
      * @param targetQueue Planner queue receiving parsed MotionCmd items.
      */
     GcodeParser(QueueHandle_t targetQueue)
-        : CppTask("Gcode", 1024, 2)
+        : CppTask("Gcode", 2048, 2)
         , _targetQueue(targetQueue)
     {
       _gcodeQueue = xQueueCreate(GCODE_QUEUE_SIZE, BUFFER_SIZE);
@@ -68,5 +68,5 @@ class GcodeParser : public CppTask
 
     static constexpr uint8_t BUFFER_SIZE = 64;
     static constexpr uint8_t QUEUE_SIZE = 65;
-    static constexpr uint8_t GCODE_QUEUE_SIZE = 60;
+    static constexpr uint8_t GCODE_QUEUE_SIZE = 80;
 };

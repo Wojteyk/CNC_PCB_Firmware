@@ -49,6 +49,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 
     Core/Src/hardware/ili9341.cpp
     Core/Src/Gcode/GcodeParser.cpp
+    Core/Src/Gcode/uart.cpp
     Core/Src/common/systemError.cpp
     Core/Src/hardware/tmc2209.cpp
      Core/Src/hardware/xpt2046.cpp

@@ -105,7 +105,7 @@ class TMC2209
     /// Configuration values.
     static constexpr uint32_t CMD_GCONF = 0x000000B1;
     static constexpr uint32_t CMD_NODECONF = 0x00000200;
-    static constexpr uint32_t CMD_IHOLD_IRUN = 0x0008301E;
+    static constexpr uint32_t CMD_IHOLD_IRUN = 0x00081F0F;
     static constexpr uint32_t CMD_TPOWERDOWN = 0x00000014;
     static constexpr uint32_t CMD_CHOPCONF = 0x14000003;
 };
