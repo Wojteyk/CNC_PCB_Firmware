@@ -1,7 +1,5 @@
 build/
 .cmake/
-
-
 *.elf
 *.bin
 *.hex
@@ -9,11 +7,7 @@ build/
 *.o
 *.obj
 *.d
-
-
 .vscode/
-
-
 .DS_Store
 Thumbs.db
 *.swp

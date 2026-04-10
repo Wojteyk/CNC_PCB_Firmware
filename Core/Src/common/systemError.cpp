@@ -76,7 +76,6 @@ static const ErrorMapping errorTable[] = {
 };
 
 const char* ErrorHandler::toMessage(ErrorCode e) {
-    // Proste wyszukiwanie w tablicy
     for (const auto& item : errorTable) {
         if (item.code == e) {
             return item.message;
