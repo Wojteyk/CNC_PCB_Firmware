@@ -42,11 +42,11 @@ struct MachineState
     int32_t stepZ = 0;
 
     /// Machine-referenced X step position (used by soft limits/homing).
-    float machineStepX = 0.0f;
+    int32_t machineStepX = 0;
     /// Machine-referenced Y step position (used by soft limits/homing).
-    float machineStepY = 0.0f;
+    int32_t machineStepY = 0;
     /// Machine-referenced Z step position (used by soft limits/homing).
-    float machineStepZ = 0.0f;
+    int32_t machineStepZ = 0;
 };
 
 /** @brief Parsed motion command. */
@@ -74,25 +74,25 @@ struct MotionCmd
 struct StepCmd
 {
     /// Absolute step delta for X.
-    int32_t dX;
+    uint32_t dX;
     /// Absolute step delta for Y.
-    int32_t dY;
+    uint32_t dY;
     /// Absolute step delta for Z.
-    int32_t dZ;
+    uint32_t dZ;
 
     /// Total DDA step count for this segment.
-    int32_t totalSteps;
+    uint32_t totalSteps;
 
-    int32_t startArr;  
-    int32_t targetArr; 
-    int32_t accelSteps; 
-    int32_t decelSteps; 
+    uint32_t startArr;
+    uint32_t targetArr;
+    uint32_t accelSteps;
+    uint32_t decelSteps;
 
     /// Direction bitmask (bit0=X, bit1=Y, bit2=Z).
     uint8_t dirMask;
 
     /// ARR increment/decrement value per accel step.
-    int16_t accIncrease;
+    uint16_t accIncrease;
     /// Whether deceleration phase should be applied.
     bool slowDown;
     /// Whether this command performs homing behavior.

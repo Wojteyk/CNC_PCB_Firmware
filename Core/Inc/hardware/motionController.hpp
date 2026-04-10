@@ -83,6 +83,15 @@ template <typename driver> class MotionController
         {
             return Result<void>(ErrorCode::Controller_TimInitFail);
         }
+
+                // Włącz dostęp do licznika DWT
+        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
+
+        // Wyzeruj licznik cykli
+        DWT->CYCCNT = 0;
+
+        // Uruchom odliczanie
+        DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
         return Result<void>();
     }
 
@@ -99,6 +108,7 @@ template <typename driver> class MotionController
     /** @brief Timer tick handler called from ISR context. */
     void tick()
     {
+        uint32_t start_time = DWT->CYCCNT;
         if (_workingState == WorkingState::Idle)
         {
             if (!tryLoadNextCommand())
@@ -115,19 +125,19 @@ template <typename driver> class MotionController
             {
                 _currentCmd.dY = 0;
             }
-            if(_currentCmd.dX ==0 && _currentCmd.dY == 0)
+            if(_currentCmd.dX == 0U && _currentCmd.dY == 0U)
             {
                 _currentCmd.dZ = _dda.totalSteps;
                 if(!HAL_GPIO_ReadPin(ZAXIS_ENDSW_GPIO_Port, ZAXIS_ENDSW_Pin))
                 {
-                    _dda.totalSteps = 0; 
-                    _dda.currentSteps = 0;
+                    _dda.totalSteps = 0U;
+                    _dda.currentSteps = 0U;
                 }
                 
             }
         } 
 
-        if (_dda.totalSteps <= 0)
+        if (_dda.totalSteps == 0U)
         {
             _workingState = WorkingState::Idle;
             return;
@@ -161,7 +171,7 @@ template <typename driver> class MotionController
 
         if (stepMade)
         {
-            for (volatile int i = 0; i < 10; i++)
+            for (volatile uint8_t i = 0; i < 10U; i++)
                 ;
             _axisX.stepLow();
             _axisY.stepLow();
@@ -215,6 +225,14 @@ template <typename driver> class MotionController
                 _workingState = WorkingState::Idle;
             }
         }
+
+        uint32_t end_time = DWT->CYCCNT; // Łapiemy czas zakończenia
+        
+        // Obliczamy czas trwania (uwzględnia automatycznie przepełnienie licznika)
+        isr_duration_cycles = end_time - start_time;
+        if (isr_duration_cycles > isr_max_cycles) {
+         isr_max_cycles = isr_duration_cycles;
+        }
     }
 
   private:
@@ -245,10 +263,8 @@ template <typename driver> class MotionController
 
             _currentCmd = nextCmd;
 
-            const uint32_t cmdStartArr =
-                (_currentCmd.startArr > 0) ? static_cast<uint32_t>(_currentCmd.startArr) : 1U;
-            const uint32_t cmdTargetArr =
-                (_currentCmd.targetArr > 0) ? static_cast<uint32_t>(_currentCmd.targetArr) : 1U;
+            const uint32_t cmdStartArr = (_currentCmd.startArr > 0U) ? _currentCmd.startArr : 1U;
+            const uint32_t cmdTargetArr = (_currentCmd.targetArr > 0U) ? _currentCmd.targetArr : 1U;
 
             _currentStartSpeedSps = arrToSpeed(cmdStartArr);
             _currentTargetSpeedSps = arrToSpeed(cmdTargetArr);
@@ -261,7 +277,7 @@ template <typename driver> class MotionController
 
             _currentSpeedSps = arrToSpeed(_currentArr);
 
-            if (_currentCmd.accelSteps > 0 && _currentTargetSpeedSps > _currentStartSpeedSps)
+            if (_currentCmd.accelSteps > 0U && _currentTargetSpeedSps > _currentStartSpeedSps)
             {
                 const float startV2 = _currentStartSpeedSps * _currentStartSpeedSps;
                 const float targetV2 = _currentTargetSpeedSps * _currentTargetSpeedSps;
@@ -273,7 +289,6 @@ template <typename driver> class MotionController
                 _currentAccelSps2 = 0.0f;
             }
             
-
             return true;
         }
 
@@ -317,13 +332,16 @@ template <typename driver> class MotionController
 
     struct DDA
     {
-        volatile int32_t currentSteps;
-        volatile int32_t totalSteps;
+        volatile uint32_t currentSteps;
+        volatile uint32_t totalSteps;
 
-        volatile int32_t accX;
-        volatile int32_t accY;
-        volatile int32_t accZ;
+        volatile uint32_t accX;
+        volatile uint32_t accY;
+        volatile uint32_t accZ;
 
     } _dda;
+
+    volatile uint32_t isr_duration_cycles = 0;
+    volatile uint32_t isr_max_cycles = 0;
 };
 template <typename driver> MotionController<driver>* MotionController<driver>::instance = nullptr;

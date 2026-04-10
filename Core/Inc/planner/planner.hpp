@@ -34,6 +34,11 @@ template <typename T> class Planner : public CppTask
         _state = {};
         _motionQueue = xQueueCreate(QUEUE_SIZE, sizeof(MotionCmd));
         _stateMutex = xSemaphoreCreateMutex();
+
+        _defaultAccelSps2 = profileAccelerationSps2(_config.defaultTargetSpeedToArr,
+                                                    _config.defaultAccelerationSteps);
+        _rapidAccelSps2 =
+            profileAccelerationSps2(_config.rapidTargetSpeedToArr, _config.rapidAccelerationSteps);
     }
 
     /** @brief Return queue handle for motion input commands. */
@@ -113,9 +118,9 @@ template <typename T> class Planner : public CppTask
                 }
             }
 
-            stepCmd.dX = std::abs(target.stepX - _state.stepX);
-            stepCmd.dY = std::abs(target.stepY - _state.stepY);
-            stepCmd.dZ = std::abs(target.stepZ - _state.stepZ);
+            stepCmd.dX = static_cast<uint32_t>(std::abs(target.stepX - _state.stepX));
+            stepCmd.dY = static_cast<uint32_t>(std::abs(target.stepY - _state.stepY));
+            stepCmd.dZ = static_cast<uint32_t>(std::abs(target.stepZ - _state.stepZ));
 
             stepCmd.totalSteps = std::max({stepCmd.dX, stepCmd.dY, stepCmd.dZ});
 
@@ -163,7 +168,7 @@ template <typename T> class Planner : public CppTask
             xSemaphoreGive(_stateMutex);
         }
 
-        if (stepCmd.totalSteps == 0)
+        if (stepCmd.totalSteps == 0U)
             return stepCmd;
 
         return stepCmd;
@@ -180,9 +185,12 @@ template <typename T> class Planner : public CppTask
         int32_t potentialMachineStepY = _state.machineStepY + diffY;
         int32_t potentialMachineStepZ = _state.machineStepZ + diffZ;
 
-        if (potentialMachineStepX < 0 || potentialMachineStepX > _config.xStepMax ||
-            potentialMachineStepY < 0 || potentialMachineStepY > _config.yStepMax ||
-            potentialMachineStepZ < 0 || potentialMachineStepZ > _config.zStepMax)
+        if (potentialMachineStepX < 0 ||
+            potentialMachineStepX > static_cast<int32_t>(_config.xStepMax) ||
+            potentialMachineStepY < 0 ||
+            potentialMachineStepY > static_cast<int32_t>(_config.yStepMax) ||
+            potentialMachineStepZ < 0 ||
+            potentialMachineStepZ > static_cast<int32_t>(_config.zStepMax))
         {
             return false;
         }
@@ -264,7 +272,7 @@ template <typename T> class Planner : public CppTask
     /** @brief Convert active feed rate to target ARR for a linear move. */
     uint32_t calculateLinearTargetArr(const StepCmd& stepCmd) const
     {
-        if (stepCmd.totalSteps <= 0)
+        if (stepCmd.totalSteps == 0U)
         {
             return _config.defaultTargetSpeedToArr;
         }
@@ -280,7 +288,8 @@ template <typename T> class Planner : public CppTask
         }
 
         const float stepsPerPathMm = static_cast<float>(stepCmd.totalSteps) / distanceMm;
-        const float feedMmPerMin = (_modalFeedRate > 0.0f) ? _modalFeedRate : _config.defaultFeedRate;
+        const float feedMmPerMin =
+            (_modalFeedRate > 0.0f) ? _modalFeedRate : _config.defaultFeedRate;
         float stepFrequencyHz = (feedMmPerMin / 60.0f) * stepsPerPathMm;
 
         if (stepFrequencyHz < 1.0f)
@@ -333,7 +342,7 @@ template <typename T> class Planner : public CppTask
         float targetSpeed = arrToStepFrequency(targetArr);
         const float accel = (accelSps2 > 0.0f) ? accelSps2 : 1.0f;
 
-        const uint32_t halfSegment = static_cast<uint32_t>(stepCmd.totalSteps / 2);
+        const uint32_t halfSegment = stepCmd.totalSteps / 2U;
         uint32_t accelSteps = 0U;
 
         if (halfSegment > 0U && targetSpeed > startSpeed)
@@ -355,39 +364,45 @@ template <typename T> class Planner : public CppTask
             }
         }
 
-        stepCmd.startArr = static_cast<int32_t>(startArr);
-        stepCmd.targetArr = static_cast<int32_t>(targetArr);
-        stepCmd.accelSteps = static_cast<int32_t>(accelSteps);
-        stepCmd.decelSteps = static_cast<int32_t>(stepCmd.totalSteps - accelSteps);
+        stepCmd.startArr = startArr;
+        stepCmd.targetArr = targetArr;
+        stepCmd.accelSteps = accelSteps;
+        stepCmd.decelSteps = stepCmd.totalSteps - accelSteps;
         stepCmd.accIncrease = 0;
     }
 
     /** @brief Apply acceleration profile for selected motion type. */
     void applyMotionRamp(StepCmd& stepCmd, const MotionCmd& cmd)
     {
-        const float defaultAccelSps2 =
-            profileAccelerationSps2(_config.defaultTargetSpeedToArr, _config.defaultAcceleration.steps);
-        const float rapidAccelSps2 =
-            profileAccelerationSps2(_config.rapidTargetSpeedToArr, _config.rapidAcceleration.steps);
-
         if (cmd.motion == MotionType::Linear)
         {
-            configureConstantAccelerationRamp(stepCmd, calculateLinearTargetArr(stepCmd), defaultAccelSps2);
+            configureConstantAccelerationRamp(stepCmd,
+                                              calculateLinearTargetArr(stepCmd),
+                                              _defaultAccelSps2);
         }
         else if (cmd.motion == MotionType::Rapid)
         {
-            configureConstantAccelerationRamp(stepCmd, _config.rapidTargetSpeedToArr, rapidAccelSps2);
+            uint32_t rapidArr = _config.rapidTargetSpeedToArr;
+
+            if (stepCmd.dZ > 0)
+            {
+                rapidArr = _config.defaultTargetSpeedToArr;
+            }
+
+            configureConstantAccelerationRamp(stepCmd, rapidArr, _rapidAccelSps2);
         }
         else if (cmd.motion == MotionType::Move || cmd.motion == MotionType::Homing)
         {
-            configureConstantAccelerationRamp(stepCmd, _config.slowTargetSpeedToArr, defaultAccelSps2);
+            configureConstantAccelerationRamp(stepCmd,
+                                              _config.slowTargetSpeedToArr,
+                                              _defaultAccelSps2);
             stepCmd.slowDown = false;
         }
         else if (cmd.motion == MotionType::Stop)
         {
             configureConstantAccelerationRamp(stepCmd,
                                               _config.defaultTargetSpeedToArr,
-                                              defaultAccelSps2);
+                                              _defaultAccelSps2);
         }
     }
 
@@ -398,6 +413,9 @@ template <typename T> class Planner : public CppTask
     MotionController<T>* _controller;
     float _modalFeedRate;
     MachineState _state;
+
+    float _defaultAccelSps2;
+    float _rapidAccelSps2;
 
     mutable SemaphoreHandle_t _stateMutex;
 };

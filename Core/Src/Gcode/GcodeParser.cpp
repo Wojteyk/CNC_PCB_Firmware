@@ -56,7 +56,7 @@ Result<MotionCmd> GcodeParser::parseLine(std::string_view line)
         case 'G':
             line.remove_prefix(1);
             {
-                int g;
+                uint16_t g;
                 if (!parseInt(line, g))
                     return Result<MotionCmd>(ErrorCode::Parser_InvalidFormat);
                 cmd.motion = static_cast<MotionType>(g);
@@ -126,7 +126,7 @@ bool GcodeParser::parseFloat(std::string_view& number, float& value)
     return true;
 }
 
-bool GcodeParser::parseInt(std::string_view& number, int& value)
+bool GcodeParser::parseInt(std::string_view& number, uint16_t& value)
 {
     auto [ptr, ec] = std::from_chars(number.data(), number.data() + number.size(), value);
 

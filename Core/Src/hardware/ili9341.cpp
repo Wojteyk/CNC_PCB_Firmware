@@ -101,7 +101,7 @@ Result<void> ILI9341::pushColorBlock(uint32_t color, uint32_t pixelCnt)
 
     uint32_t bufferSize = (pixelCnt < LCD_BUFFER_SIZE) ? pixelCnt : LCD_BUFFER_SIZE;
 
-    for (int i = 0; i < bufferSize; i++)
+    for (uint32_t i = 0; i < bufferSize; i++)
         lineBuffer[i] = swappedColor;
 
     uint32_t remaining = pixelCnt;
@@ -150,10 +150,10 @@ Result<void> ILI9341::drawChar(uint16_t x, uint16_t y, char c, uint16_t color, u
 
     uint32_t buffIdx = 0;
 
-    for (int row = 0; row < FONT_HEIGHT; row++)
+    for (uint8_t row = 0; row < FONT_HEIGHT; row++)
     {
         uint8_t bitmask = charBitmap[row];
-        for (int col = 0; col < FONT_WIDTH; col++)
+        for (uint8_t col = 0; col < FONT_WIDTH; col++)
         {
             bool pixelOn = (bitmask & (0x80 >> col));
             lineBuffer[buffIdx++] = pixelOn ? swappedFg : swappedBg;

@@ -48,32 +48,18 @@ struct MachineConfig
     float stepsPerMM_XY = 1600.0f; ///< Steps per millimeter for X/Y.
     float stepsPerMM_Z = 1600.0f;  ///< Steps per millimeter for Z.
 
-    uint32_t xStepMax = 120*stepsPerMM_XY;   ///< Soft limit for X axis in steps.
-    uint32_t yStepMax = 120*stepsPerMM_XY;   ///< Soft limit for Y axis in steps.
+    uint32_t xStepMax = 140*stepsPerMM_XY;   ///< Soft limit for X axis in steps.
+    uint32_t yStepMax = 140*stepsPerMM_XY;   ///< Soft limit for Y axis in steps.
     uint32_t zStepMax = 35*stepsPerMM_Z;     ///< Soft limit for Z axis in steps.
 
-    uint32_t startingSpeedToArr = 2500;      ///< Start speed ARR (~400 Hz).
-    uint32_t defaultTargetSpeedToArr = 100;   ///< Default target ARR (~10 kHz).
-    uint32_t rapidTargetSpeedToArr = 80;     ///< Rapid target ARR (~14 kHz).
-    uint32_t slowTargetSpeedToArr = 200;
     uint32_t stepTimerClockHz = 1000000;     ///< TIM tick after prescaler [Hz].
 
-    /** @brief Linear acceleration profile. */
-    struct Acceleration
-    {
-        uint16_t increase;
-        uint16_t steps;
-    };
+    uint32_t startingSpeedToArr = 2500;      ///< Start speed ARR 
+    uint32_t slowTargetSpeedToArr = 200;     ///< slow target ARR 
+    uint32_t defaultTargetSpeedToArr = 100;   ///< Default target ARR 
+    uint32_t rapidTargetSpeedToArr = 80;     ///< Rapid target ARR 
 
-    Acceleration defaultAcceleration = {25, 0};
-    Acceleration rapidAcceleration = {10, 0};
-
-    MachineConfig()
-    {
-        defaultAcceleration.steps =
-            (startingSpeedToArr - defaultTargetSpeedToArr) / defaultAcceleration.increase;
-
-        rapidAcceleration.steps =
-            (startingSpeedToArr - rapidTargetSpeedToArr) / rapidAcceleration.increase;
-    }
+    uint16_t defaultAccelerationSteps = 100; 
+    uint16_t rapidAccelerationSteps   = 250;
+   
 };

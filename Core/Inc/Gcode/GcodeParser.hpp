@@ -61,7 +61,7 @@ class GcodeParser : public CppTask
      * @param value Parsed result.
      * @return true on success.
      */
-    bool parseInt(std::string_view& number, int& value);
+    bool parseInt(std::string_view& number, uint16_t& value);
 
     QueueHandle_t _targetQueue;
     QueueHandle_t _gcodeQueue;
