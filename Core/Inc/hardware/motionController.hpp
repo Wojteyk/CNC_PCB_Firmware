@@ -34,14 +34,14 @@ enum struct WorkingState
 template <typename driver> class MotionController
 {
   public:
-        /**
-         * @brief Construct motion controller.
-         * @param tim Timer used as step interrupt source.
-         * @param axisX Axis driver for X.
-         * @param axisY Axis driver for Y.
-         * @param axisZ Axis driver for Z.
-         * @param config Machine configuration reference.
-         */
+    /**
+     * @brief Construct motion controller.
+     * @param tim Timer used as step interrupt source.
+     * @param axisX Axis driver for X.
+     * @param axisY Axis driver for Y.
+     * @param axisZ Axis driver for Z.
+     * @param config Machine configuration reference.
+     */
     MotionController(TIM_HandleTypeDef* tim,
                      driver& axisX,
                      driver& axisY,
@@ -84,7 +84,7 @@ template <typename driver> class MotionController
             return Result<void>(ErrorCode::Controller_TimInitFail);
         }
 
-                // Włącz dostęp do licznika DWT
+        // Włącz dostęp do licznika DWT
         CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
 
         // Wyzeruj licznik cykli
@@ -117,25 +117,24 @@ template <typename driver> class MotionController
         else if (_workingState == WorkingState::Homing)
         {
             _currentCmd.dZ = 0;
-            if(HAL_GPIO_ReadPin(XAXIS_ENDSW_GPIO_Port,XAXIS_ENDSW_Pin))
+            if (HAL_GPIO_ReadPin(XAXIS_ENDSW_GPIO_Port, XAXIS_ENDSW_Pin))
             {
-                 _currentCmd.dX = 0;
+                _currentCmd.dX = 0;
             }
-            if(HAL_GPIO_ReadPin(YAXIS_ENDSW_GPIO_Port,YAXIS_ENDSW_Pin))
+            if (HAL_GPIO_ReadPin(YAXIS_ENDSW_GPIO_Port, YAXIS_ENDSW_Pin))
             {
                 _currentCmd.dY = 0;
             }
-            if(_currentCmd.dX == 0U && _currentCmd.dY == 0U)
+            if (_currentCmd.dX == 0U && _currentCmd.dY == 0U)
             {
                 _currentCmd.dZ = _dda.totalSteps;
-                if(!HAL_GPIO_ReadPin(ZAXIS_ENDSW_GPIO_Port, ZAXIS_ENDSW_Pin))
+                if (!HAL_GPIO_ReadPin(ZAXIS_ENDSW_GPIO_Port, ZAXIS_ENDSW_Pin))
                 {
                     _dda.totalSteps = 0U;
                     _dda.currentSteps = 0U;
                 }
-                
             }
-        } 
+        }
 
         if (_dda.totalSteps == 0U)
         {
@@ -169,53 +168,44 @@ template <typename driver> class MotionController
             stepMade = true;
         }
 
-        if (stepMade)
-        {
-            for (volatile uint8_t i = 0; i < 10U; i++)
-                ;
-            _axisX.stepLow();
-            _axisY.stepLow();
-            _axisZ.stepLow();
-        }
-
         _dda.currentSteps++;
 
         bool arrChanged = false;
 
         const bool inAccel = (_dda.currentSteps < _currentCmd.accelSteps);
         const bool inDecel = (_dda.currentSteps >= _currentCmd.decelSteps && _currentCmd.slowDown);
-        if ((inAccel || inDecel) && _currentAccelSps2 > 0.0f)
+
+        if (inAccel)
         {
-            const float dt = static_cast<float>(_currentArr) / static_cast<float>(_config.stepTimerClockHz);
-
-            if (inAccel && _currentSpeedSps < _currentTargetSpeedSps)
+            _currentSpeedSps += _currentCmd.speedStepSps;
+            if (_currentSpeedSps > _currentTargetSpeedSps)
             {
-                _currentSpeedSps += (_currentAccelSps2 * dt);
-                if (_currentSpeedSps > _currentTargetSpeedSps)
-                {
-                    _currentSpeedSps = _currentTargetSpeedSps;
-                }
-                arrChanged = true;
+                _currentSpeedSps = _currentTargetSpeedSps;
             }
-            else if (inDecel && _currentSpeedSps > _currentStartSpeedSps)
+            arrChanged = true;
+        }
+        else if (inDecel)
+        {
+            _currentSpeedSps -= _currentCmd.speedStepSps;
+            if (_currentSpeedSps < _currentStartSpeedSps)
             {
-                _currentSpeedSps -= (_currentAccelSps2 * dt);
-                if (_currentSpeedSps < _currentStartSpeedSps)
-                {
-                    _currentSpeedSps = _currentStartSpeedSps;
-                }
-                arrChanged = true;
+                _currentSpeedSps = _currentStartSpeedSps;
             }
-
-            if (arrChanged)
-            {
-                _currentArr = speedToArr(_currentSpeedSps);
-            }
+            arrChanged = true;
         }
 
         if (arrChanged)
         {
+            _currentArr = static_cast<uint32_t>(static_cast<float>(_config.stepTimerClockHz) /
+                                                _currentSpeedSps);
             __HAL_TIM_SET_AUTORELOAD(_tim, _currentArr);
+        }
+
+        if (stepMade)
+        {
+            _axisX.stepLow();
+            _axisY.stepLow();
+            _axisZ.stepLow();
         }
 
         if (_dda.currentSteps >= _dda.totalSteps)
@@ -227,11 +217,12 @@ template <typename driver> class MotionController
         }
 
         uint32_t end_time = DWT->CYCCNT; // Łapiemy czas zakończenia
-        
+
         // Obliczamy czas trwania (uwzględnia automatycznie przepełnienie licznika)
         isr_duration_cycles = end_time - start_time;
-        if (isr_duration_cycles > isr_max_cycles) {
-         isr_max_cycles = isr_duration_cycles;
+        if (isr_duration_cycles > isr_max_cycles)
+        {
+            isr_max_cycles = isr_duration_cycles;
         }
     }
 
@@ -246,15 +237,16 @@ template <typename driver> class MotionController
             _dda.accX = _dda.accY = _dda.accZ = 0;
             _dda.currentSteps = 0;
             _dda.totalSteps = nextCmd.totalSteps;
-            
-            if(nextCmd.homing)
+
+            if (nextCmd.homing)
             {
                 _workingState = WorkingState::Homing;
                 _axisX.setDirection(0);
                 _axisY.setDirection(0);
                 _axisZ.setDirection(0);
             }
-            else{
+            else
+            {
                 _workingState = WorkingState::Working;
                 _axisX.setDirection((nextCmd.dirMask & 0x01) != 0);
                 _axisY.setDirection((nextCmd.dirMask & 0x02) != 0);
@@ -277,18 +269,16 @@ template <typename driver> class MotionController
 
             _currentSpeedSps = arrToSpeed(_currentArr);
 
-            if (_currentCmd.accelSteps > 0U && _currentTargetSpeedSps > _currentStartSpeedSps)
+            if (_currentCmd.accelSteps > 0U)
             {
-                const float startV2 = _currentStartSpeedSps * _currentStartSpeedSps;
-                const float targetV2 = _currentTargetSpeedSps * _currentTargetSpeedSps;
-                _currentAccelSps2 =
-                    (targetV2 - startV2) / (2.0f * static_cast<float>(_currentCmd.accelSteps));
+                _currentCmd.speedStepSps = (_currentTargetSpeedSps - _currentStartSpeedSps) /
+                                           static_cast<float>(_currentCmd.accelSteps);
             }
             else
             {
-                _currentAccelSps2 = 0.0f;
+                _currentCmd.speedStepSps = 0.0f;
             }
-            
+
             return true;
         }
 
@@ -310,7 +300,6 @@ template <typename driver> class MotionController
 
     void startHoming()
     {
-        
     }
 
     TIM_HandleTypeDef* _tim;
