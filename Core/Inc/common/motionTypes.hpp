@@ -97,5 +97,7 @@ struct StepCmd
     bool slowDown;
     /// Whether this command performs homing behavior.
     bool homing;
+    /// speed increment per step [Hz/step]
+    float speedStepSps;
 };
 

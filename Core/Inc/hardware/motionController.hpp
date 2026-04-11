@@ -83,16 +83,6 @@ template <typename driver> class MotionController
         {
             return Result<void>(ErrorCode::Controller_TimInitFail);
         }
-
-        // Włącz dostęp do licznika DWT
-        CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;
-
-        // Wyzeruj licznik cykli
-        DWT->CYCCNT = 0;
-
-        // Uruchom odliczanie
-        DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;
-        return Result<void>();
     }
 
     /**
@@ -108,7 +98,6 @@ template <typename driver> class MotionController
     /** @brief Timer tick handler called from ISR context. */
     void tick()
     {
-        uint32_t start_time = DWT->CYCCNT;
         if (_workingState == WorkingState::Idle)
         {
             if (!tryLoadNextCommand())
@@ -216,14 +205,6 @@ template <typename driver> class MotionController
             }
         }
 
-        uint32_t end_time = DWT->CYCCNT; // Łapiemy czas zakończenia
-
-        // Obliczamy czas trwania (uwzględnia automatycznie przepełnienie licznika)
-        isr_duration_cycles = end_time - start_time;
-        if (isr_duration_cycles > isr_max_cycles)
-        {
-            isr_max_cycles = isr_duration_cycles;
-        }
     }
 
   private:
