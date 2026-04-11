@@ -28,6 +28,11 @@ class GcodeParser : public CppTask
         , _targetQueue(targetQueue)
     {
       _gcodeQueue = xQueueCreate(GCODE_QUEUE_SIZE, BUFFER_SIZE);
+
+      if(_gcodeQueue == nullptr)
+      {
+        ErrorHandler::report(ErrorCode::System_QueueCreateFail);
+      }
     }
 
     /** @brief Get queue handle used to push incoming G-code text. */
@@ -66,7 +71,7 @@ class GcodeParser : public CppTask
     QueueHandle_t _targetQueue;
     QueueHandle_t _gcodeQueue;
 
-    static constexpr uint8_t BUFFER_SIZE = 64;
+    static constexpr uint8_t BUFFER_SIZE = 128;
     static constexpr uint8_t QUEUE_SIZE = 65;
     static constexpr uint8_t GCODE_QUEUE_SIZE = 80;
 };

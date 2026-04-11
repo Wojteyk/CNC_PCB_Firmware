@@ -35,6 +35,11 @@ template <typename T> class Planner : public CppTask
         _motionQueue = xQueueCreate(QUEUE_SIZE, sizeof(MotionCmd));
         _stateMutex = xSemaphoreCreateMutex();
 
+        if (_motionQueue == nullptr || _stateMutex == nullptr)
+        {
+            ErrorHandler::report(ErrorCode::System_QueueCreateFail);
+        }
+
         _defaultAccelSps2 = profileAccelerationSps2(_config.defaultTargetSpeedToArr,
                                                     _config.defaultAccelerationSteps);
         _rapidAccelSps2 =
@@ -67,8 +72,21 @@ template <typename T> class Planner : public CppTask
 
         while (true)
         {
+            if (ErrorHandler::emergencyStopActive())
+            {
+                xQueueReset(_motionQueue);
+                _controller->resetQueue();
+                vTaskDelay(pdMS_TO_TICKS(10));
+                continue;
+            }
+
             if (xQueueReceive(_motionQueue, &currentCmd, portMAX_DELAY) == pdPASS)
             {
+                if (ErrorHandler::emergencyStopActive())
+                {
+                    continue;
+                }
+
                 StepCmd stepcmd = calculateSteps(currentCmd);
 
                 _controller->addMove(stepcmd);

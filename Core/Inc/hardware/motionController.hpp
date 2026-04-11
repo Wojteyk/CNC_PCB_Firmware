@@ -54,10 +54,16 @@ template <typename driver> class MotionController
         , _config(config)
     {
         _stepsQueue = xQueueCreate(HW_QUEUE_SIZE, sizeof(StepCmd));
+
+        if(_stepsQueue == nullptr)
+        {
+            ErrorHandler::report(ErrorCode::System_QueueCreateFail);
+        }
         instance = this;
     }
 
     static MotionController* instance;
+
 
     /** @brief Initialize drivers, queue and timer ISR. */
     Result<void> init()
@@ -83,6 +89,8 @@ template <typename driver> class MotionController
         {
             return Result<void>(ErrorCode::Controller_TimInitFail);
         }
+
+        return Result<void>();
     }
 
     /**
@@ -91,6 +99,10 @@ template <typename driver> class MotionController
      */
     void addMove(const StepCmd& stepCmd)
     {
+        if (_stepsQueue == nullptr || ErrorHandler::emergencyStopActive())
+        {
+            return;
+        }
 
         xQueueSend(_stepsQueue, &stepCmd, portMAX_DELAY);
     }
@@ -98,6 +110,20 @@ template <typename driver> class MotionController
     /** @brief Timer tick handler called from ISR context. */
     void tick()
     {
+        if (ErrorHandler::emergencyStopActive())
+        {
+            _workingState = WorkingState::Error;
+            _dda.currentSteps = 0U;
+            _dda.totalSteps = 0U;
+            _dda.accX = 0U;
+            _dda.accY = 0U;
+            _dda.accZ = 0U;
+            _axisX.stepLow();
+            _axisY.stepLow();
+            _axisZ.stepLow();
+            return;
+        }
+
         if (_workingState == WorkingState::Idle)
         {
             if (!tryLoadNextCommand())
@@ -207,6 +233,15 @@ template <typename driver> class MotionController
 
     }
 
+    void resetQueue() 
+    {
+        xQueueReset(_stepsQueue);
+        
+        _dda.totalSteps = 0;
+        _dda.currentSteps = 0;
+        _workingState = WorkingState::Idle;
+    }
+
   private:
     bool tryLoadNextCommand()
     {
@@ -277,10 +312,6 @@ template <typename driver> class MotionController
         const float safeSpeed = std::max(speedSps, 1.0f);
         const float arr = static_cast<float>(_config.stepTimerClockHz) / safeSpeed;
         return static_cast<uint32_t>(std::max(arr, 1.0f));
-    }
-
-    void startHoming()
-    {
     }
 
     TIM_HandleTypeDef* _tim;

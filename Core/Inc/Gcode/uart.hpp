@@ -29,7 +29,7 @@ class Uart : public CppTask
     TaskHandle_t _taskHandle;
     QueueHandle_t _targetQueue;
 
-    char _lineBuffer[256];
+    char _lineBuffer[128];
     uint16_t _linePos;
     uint8_t* _dmaBuffer;
     uint16_t _bufferSize;

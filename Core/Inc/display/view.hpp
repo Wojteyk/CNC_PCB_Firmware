@@ -17,7 +17,7 @@ extern QueueHandle_t gcodeQueue;
 
 namespace
 {
-constexpr size_t GCODE_MSG_SIZE = 64;
+constexpr size_t GCODE_MSG_SIZE = 128;
 
 /** @brief Send one G-code line to queue. */
 inline void sendGcode(QueueHandle_t queue, const char* cmd)
@@ -29,7 +29,7 @@ inline void sendGcode(QueueHandle_t queue, const char* cmd)
 
     std::array<char, GCODE_MSG_SIZE> msg{};
     std::snprintf(msg.data(), msg.size(), "%s", cmd);
-    xQueueSend(queue, msg.data(), 0);
+    xQueueSend(queue, msg.data(), pdMS_TO_TICKS(100));
 }
 } // namespace
 
@@ -475,7 +475,7 @@ class ErrorPage : public View
     ErrorPage()
         : _mainLabel(135, 10, "Errors", Colors::Blue)
         , _errorInfo(100, 30, "Critical Error", Colors::Warning)
-        , _btnBack(250, 190, 60, 40, "Back", Colors::White, Colors::Orange, backToMenu)
+        , _btnBack(230, 190, 80, 40, "Unlock", Colors::White, Colors::Orange, backToMenu)
     {
         addWidget(&_mainLabel);
         addWidget(&_errorInfo);
@@ -493,6 +493,7 @@ class ErrorPage : public View
     /** @brief Return to main menu view. */
     static void backToMenu(void* ctx)
     {
+        ErrorHandler::clearEmergencyStop();
         GuiEvent ev = GuiEvent::ShowMain;
         xQueueSend(guiEventQueue, &ev, 0);
     }

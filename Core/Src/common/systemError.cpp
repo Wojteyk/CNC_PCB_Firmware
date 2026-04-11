@@ -10,21 +10,37 @@ struct ErrorMapping {
     const char* message;
 };
 
+static volatile bool g_emergencyStop = false;
+
 void ErrorHandler::report(ErrorCode e)
 {
     g_lastError = e;  // Store the error code
     
     if (isCritical(e))
     {
+        g_emergencyStop = true;
         panicMode(e);
     }
 }
 
+bool ErrorHandler::emergencyStopActive()
+{
+    return g_emergencyStop;
+}
+
+void ErrorHandler::clearEmergencyStop()
+{
+    g_emergencyStop = false;
+}
+
 void ErrorHandler::panicMode(ErrorCode e)
 {
-        // turn off everything irq, motors and essential things
-        GuiEvent event = GuiEvent::ShowError;
+    // turn off everything irq, motors and essential things
+    GuiEvent event = GuiEvent::ShowError;
+    if (guiEventQueue != nullptr)
+    {
         xQueueSend(guiEventQueue, &event, 0);
+    }
 }
 bool ErrorHandler::isCritical(ErrorCode e)
 {
@@ -32,10 +48,13 @@ bool ErrorHandler::isCritical(ErrorCode e)
     {
     case ErrorCode::Machine_HardLimitReached:
     case ErrorCode::Machine_StepperFault:
+    case ErrorCode::System_QueueCreateFail:
     case ErrorCode::Task_CreationFailed:
     case ErrorCode::Parser_InvalidFormat:
     case ErrorCode::TMC_UartTimeout:
     case ErrorCode::TMC_ResponseNotCorrect:
+    case ErrorCode::Controller_TimInitFail:
+    case ErrorCode::Controller_QueueCreateFail:
     case ErrorCode::Machine_SoftLimitReached:
         return true;
 
@@ -61,6 +80,7 @@ static const ErrorMapping errorTable[] = {
     // System Errors
     { ErrorCode::System_QueueFull,          "System: Queue Overrun" },
     { ErrorCode::System_QueueEmpty,         "System: Queue Underrun" },
+    { ErrorCode::System_QueueCreateFail,    "System: Queue Create Failed" },
     { ErrorCode::Task_InvalidParams,        "RTOS: Invalid Task Params" },
     { ErrorCode::Task_AlreadyRunning,       "RTOS: Task Already Active" },
     { ErrorCode::Task_CreationFailed,       "RTOS: Task Creation Failed" },

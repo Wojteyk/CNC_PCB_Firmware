@@ -24,6 +24,7 @@ enum class ErrorCode : uint8_t
 
     System_QueueFull,  ///< Queue full.
     System_QueueEmpty, ///< Queue empty.
+    System_QueueCreateFail,
 
     Task_InvalidParams,
     Task_AlreadyRunning,
@@ -110,6 +111,12 @@ class ErrorHandler
   public:
     /** @brief Handle an error code. */
     static void report(ErrorCode e);
+
+        /** @brief Return true when emergency stop is active. */
+        static bool emergencyStopActive();
+
+        /** @brief Clear emergency stop state. */
+        static void clearEmergencyStop();
 
     /** @brief Convert error code to readable text. */
     static const char* toMessage(ErrorCode e);
