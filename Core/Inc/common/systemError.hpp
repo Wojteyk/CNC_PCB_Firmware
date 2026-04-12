@@ -25,6 +25,7 @@ enum class ErrorCode : uint8_t
     System_QueueFull,  ///< Queue full.
     System_QueueEmpty, ///< Queue empty.
     System_QueueCreateFail,
+    System_StopButtonPressed,
 
     Task_InvalidParams,
     Task_AlreadyRunning,

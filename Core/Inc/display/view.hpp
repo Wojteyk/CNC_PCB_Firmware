@@ -112,10 +112,10 @@ class MainMenu : public View
                     40,
                     120,
                     40,
-                    "START",
+                    "Stop",
                     Colors::White,
-                    Colors::Green,
-                    sendStartGcode,
+                    Colors::Red,
+                    stopSystem,
                     nullptr,
                     nullptr,
                     this)
@@ -142,73 +142,10 @@ class MainMenu : public View
         xQueueSend(guiEventQueue, &ev, 0);
     }
 
-    /** @brief Queue startup demo/toolpath G-code sequence. */
-    static void sendStartGcode(void* ctx)
+    /** @brief Stop whole sysytem */
+    static void stopSystem(void* ctx)
     {
-        auto* self = static_cast<MainMenu*>(ctx);
-        if (self->_gcodeQueue != nullptr)
-        {
-            const char* cmd;
-
-            cmd = "G0 X2.50 Y0.00 Z2";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 Z0";
-            sendGcode(self->_gcodeQueue, cmd);
-
-            cmd = "G1 X2.41 Y0.65";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X2.17 Y1.25";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X1.77 Y1.77";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X1.25 Y2.17";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X0.65 Y2.41";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X0.00 Y2.50";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X-0.65 Y2.41";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X-1.25 Y2.17";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X-1.77 Y1.77";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X-2.17 Y1.25";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X-2.41 Y0.65";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X-2.50 Y0.00";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X-2.41 Y-0.65";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X-2.17 Y-1.25";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X-1.77 Y-1.77";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X-1.25 Y-2.17";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X-0.65 Y-2.41";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X0.00 Y-2.50";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X0.65 Y-2.41";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X1.25 Y-2.17";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X1.77 Y-1.77";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X2.17 Y-1.25";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X2.41 Y-0.65";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G1 X2.50 Y0.00";
-            sendGcode(self->_gcodeQueue, cmd);
-
-            cmd = "G0 Z2";
-            sendGcode(self->_gcodeQueue, cmd);
-            cmd = "G0 X0 Y0";
-            sendGcode(self->_gcodeQueue, cmd);
-        }
+        ErrorHandler::report(ErrorCode::System_StopButtonPressed);
     }
 
   private:

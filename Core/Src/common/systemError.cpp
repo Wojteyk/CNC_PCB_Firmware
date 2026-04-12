@@ -56,6 +56,7 @@ bool ErrorHandler::isCritical(ErrorCode e)
     case ErrorCode::Controller_TimInitFail:
     case ErrorCode::Controller_QueueCreateFail:
     case ErrorCode::Machine_SoftLimitReached:
+    case ErrorCode::System_StopButtonPressed:
         return true;
 
     default:
@@ -81,6 +82,7 @@ static const ErrorMapping errorTable[] = {
     { ErrorCode::System_QueueFull,          "System: Queue Overrun" },
     { ErrorCode::System_QueueEmpty,         "System: Queue Underrun" },
     { ErrorCode::System_QueueCreateFail,    "System: Queue Create Failed" },
+    {ErrorCode::System_StopButtonPressed,   "System: Stop button pressed"},
     { ErrorCode::Task_InvalidParams,        "RTOS: Invalid Task Params" },
     { ErrorCode::Task_AlreadyRunning,       "RTOS: Task Already Active" },
     { ErrorCode::Task_CreationFailed,       "RTOS: Task Creation Failed" },
